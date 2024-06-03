@@ -247,7 +247,7 @@
             this.CBoxGenPar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxGenPar.AutoSize = true;
             this.CBoxGenPar.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxGenPar.Location = new System.Drawing.Point(267, 400);
+            this.CBoxGenPar.Location = new System.Drawing.Point(267, 401);
             this.CBoxGenPar.Name = "CBoxGenPar";
             this.CBoxGenPar.Size = new System.Drawing.Size(70, 21);
             this.CBoxGenPar.TabIndex = 5;
@@ -372,7 +372,7 @@
             this.CBoxMoveFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxMoveFile.AutoSize = true;
             this.CBoxMoveFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxMoveFile.Location = new System.Drawing.Point(343, 400);
+            this.CBoxMoveFile.Location = new System.Drawing.Point(342, 401);
             this.CBoxMoveFile.Name = "CBoxMoveFile";
             this.CBoxMoveFile.Size = new System.Drawing.Size(75, 21);
             this.CBoxMoveFile.TabIndex = 5;
@@ -479,6 +479,7 @@
             // 
             // DiscHelperMenuStrip
             // 
+            this.DiscHelperMenuStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.DiscHelperMenuStrip.Name = "LstDiscFilesMenuStrip";
             this.DiscHelperMenuStrip.Size = new System.Drawing.Size(61, 4);
             // 
