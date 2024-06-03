@@ -61,6 +61,7 @@
             this.NumMaxDiscInBucket = new System.Windows.Forms.NumericUpDown();
             this.label8 = new System.Windows.Forms.Label();
             this.DiscHelperMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.CboxCutFile = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscCapacity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscRedundant)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscMaxRedundant)).BeginInit();
@@ -102,7 +103,7 @@
             this.LstFiles.Location = new System.Drawing.Point(12, 82);
             this.LstFiles.Name = "LstFiles";
             this.LstFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.LstFiles.Size = new System.Drawing.Size(494, 123);
+            this.LstFiles.Size = new System.Drawing.Size(517, 123);
             this.LstFiles.TabIndex = 1;
             this.LstFiles.DragDrop += new System.Windows.Forms.DragEventHandler(this.LstFiles_DragDrop);
             this.LstFiles.DragEnter += new System.Windows.Forms.DragEventHandler(this.LstFiles_DragEnter);
@@ -118,7 +119,7 @@
             0,
             0});
             this.NumDiscCapacity.Name = "NumDiscCapacity";
-            this.NumDiscCapacity.Size = new System.Drawing.Size(102, 23);
+            this.NumDiscCapacity.Size = new System.Drawing.Size(125, 23);
             this.NumDiscCapacity.TabIndex = 2;
             this.NumDiscCapacity.Value = new decimal(new int[] {
             -769803776,
@@ -139,11 +140,11 @@
             // BtnAllocateDisc
             // 
             this.BtnAllocateDisc.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnAllocateDisc.Location = new System.Drawing.Point(417, 47);
+            this.BtnAllocateDisc.Location = new System.Drawing.Point(477, 47);
             this.BtnAllocateDisc.Name = "BtnAllocateDisc";
-            this.BtnAllocateDisc.Size = new System.Drawing.Size(92, 29);
+            this.BtnAllocateDisc.Size = new System.Drawing.Size(53, 29);
             this.BtnAllocateDisc.TabIndex = 0;
-            this.BtnAllocateDisc.Text = "分配到光盘";
+            this.BtnAllocateDisc.Text = "分配";
             this.BtnAllocateDisc.UseVisualStyleBackColor = true;
             this.BtnAllocateDisc.Click += new System.EventHandler(this.BtnAllocateDisc_Click);
             // 
@@ -175,7 +176,7 @@
             this.LstDiscFiles.Location = new System.Drawing.Point(242, 246);
             this.LstDiscFiles.Name = "LstDiscFiles";
             this.LstDiscFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.LstDiscFiles.Size = new System.Drawing.Size(265, 140);
+            this.LstDiscFiles.Size = new System.Drawing.Size(288, 140);
             this.LstDiscFiles.TabIndex = 1;
             this.LstDiscFiles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LstDiscFiles_MouseDown);
             // 
@@ -195,7 +196,7 @@
             // 
             this.BtnOutputFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnOutputFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnOutputFile.Location = new System.Drawing.Point(401, 395);
+            this.BtnOutputFile.Location = new System.Drawing.Point(424, 395);
             this.BtnOutputFile.Name = "BtnOutputFile";
             this.BtnOutputFile.Size = new System.Drawing.Size(105, 29);
             this.BtnOutputFile.TabIndex = 0;
@@ -223,7 +224,7 @@
             0,
             0});
             this.NumDiscRedundant.Name = "NumDiscRedundant";
-            this.NumDiscRedundant.Size = new System.Drawing.Size(99, 23);
+            this.NumDiscRedundant.Size = new System.Drawing.Size(90, 23);
             this.NumDiscRedundant.TabIndex = 2;
             this.NumDiscRedundant.Value = new decimal(new int[] {
             52428800,
@@ -246,7 +247,7 @@
             this.CBoxGenPar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxGenPar.AutoSize = true;
             this.CBoxGenPar.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxGenPar.Location = new System.Drawing.Point(244, 400);
+            this.CBoxGenPar.Location = new System.Drawing.Point(267, 400);
             this.CBoxGenPar.Name = "CBoxGenPar";
             this.CBoxGenPar.Size = new System.Drawing.Size(70, 21);
             this.CBoxGenPar.TabIndex = 5;
@@ -267,14 +268,14 @@
             // NumDiscMaxRedundant
             // 
             this.NumDiscMaxRedundant.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.NumDiscMaxRedundant.Location = new System.Drawing.Point(239, 51);
+            this.NumDiscMaxRedundant.Location = new System.Drawing.Point(232, 51);
             this.NumDiscMaxRedundant.Maximum = new decimal(new int[] {
             -1530494977,
             232830,
             0,
             0});
             this.NumDiscMaxRedundant.Name = "NumDiscMaxRedundant";
-            this.NumDiscMaxRedundant.Size = new System.Drawing.Size(102, 23);
+            this.NumDiscMaxRedundant.Size = new System.Drawing.Size(90, 23);
             this.NumDiscMaxRedundant.TabIndex = 2;
             this.NumDiscMaxRedundant.Value = new decimal(new int[] {
             209715200,
@@ -286,7 +287,7 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label4.Location = new System.Drawing.Point(179, 53);
+            this.label4.Location = new System.Drawing.Point(170, 53);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(56, 17);
             this.label4.TabIndex = 3;
@@ -371,7 +372,7 @@
             this.CBoxMoveFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxMoveFile.AutoSize = true;
             this.CBoxMoveFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxMoveFile.Location = new System.Drawing.Point(320, 400);
+            this.CBoxMoveFile.Location = new System.Drawing.Point(343, 400);
             this.CBoxMoveFile.Name = "CBoxMoveFile";
             this.CBoxMoveFile.Size = new System.Drawing.Size(75, 21);
             this.CBoxMoveFile.TabIndex = 5;
@@ -385,7 +386,7 @@
             this.TxtOutputPath.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.TxtOutputPath.Location = new System.Drawing.Point(126, 398);
             this.TxtOutputPath.Name = "TxtOutputPath";
-            this.TxtOutputPath.Size = new System.Drawing.Size(112, 23);
+            this.TxtOutputPath.Size = new System.Drawing.Size(135, 23);
             this.TxtOutputPath.TabIndex = 7;
             this.TxtOutputPath.Text = "DISC";
             // 
@@ -397,7 +398,7 @@
             this.TxtCMDOutput.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.TxtCMDOutput.Location = new System.Drawing.Point(15, 430);
             this.TxtCMDOutput.Name = "TxtCMDOutput";
-            this.TxtCMDOutput.Size = new System.Drawing.Size(494, 102);
+            this.TxtCMDOutput.Size = new System.Drawing.Size(517, 102);
             this.TxtCMDOutput.TabIndex = 8;
             this.TxtCMDOutput.Text = "";
             // 
@@ -405,7 +406,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label7.Location = new System.Drawing.Point(347, 18);
+            this.label7.Location = new System.Drawing.Point(370, 18);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(56, 17);
             this.label7.TabIndex = 9;
@@ -427,7 +428,7 @@
             "随机迭代10K",
             "随机迭代100K",
             "不排序"});
-            this.CBoxAllocatePolicy.Location = new System.Drawing.Point(409, 15);
+            this.CBoxAllocatePolicy.Location = new System.Drawing.Point(432, 15);
             this.CBoxAllocatePolicy.Name = "CBoxAllocatePolicy";
             this.CBoxAllocatePolicy.Size = new System.Drawing.Size(98, 25);
             this.CBoxAllocatePolicy.TabIndex = 10;
@@ -436,7 +437,7 @@
             // 
             this.CBoxFirstFit.AutoSize = true;
             this.CBoxFirstFit.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxFirstFit.Location = new System.Drawing.Point(347, 52);
+            this.CBoxFirstFit.Location = new System.Drawing.Point(409, 51);
             this.CBoxFirstFit.Name = "CBoxFirstFit";
             this.CBoxFirstFit.Size = new System.Drawing.Size(68, 21);
             this.CBoxFirstFit.TabIndex = 5;
@@ -481,17 +482,29 @@
             this.DiscHelperMenuStrip.Name = "LstDiscFilesMenuStrip";
             this.DiscHelperMenuStrip.Size = new System.Drawing.Size(61, 4);
             // 
+            // CboxCutFile
+            // 
+            this.CboxCutFile.AutoSize = true;
+            this.CboxCutFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.CboxCutFile.Location = new System.Drawing.Point(328, 51);
+            this.CboxCutFile.Name = "CboxCutFile";
+            this.CboxCutFile.Size = new System.Drawing.Size(75, 21);
+            this.CboxCutFile.TabIndex = 5;
+            this.CboxCutFile.Text = "分割文件";
+            this.CboxCutFile.UseVisualStyleBackColor = true;
+            // 
             // MainUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(521, 544);
+            this.ClientSize = new System.Drawing.Size(544, 544);
             this.Controls.Add(this.CBoxAllocatePolicy);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.TxtCMDOutput);
             this.Controls.Add(this.TxtOutputPath);
             this.Controls.Add(this.TxtDiscPrefix);
             this.Controls.Add(this.CBoxMoveFile);
+            this.Controls.Add(this.CboxCutFile);
             this.Controls.Add(this.CBoxFirstFit);
             this.Controls.Add(this.CBoxGenPar);
             this.Controls.Add(this.label8);
@@ -563,6 +576,7 @@
         private System.Windows.Forms.NumericUpDown NumMaxDiscInBucket;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.ContextMenuStrip DiscHelperMenuStrip;
+        private System.Windows.Forms.CheckBox CboxCutFile;
     }
 }
 

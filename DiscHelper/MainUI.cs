@@ -50,6 +50,7 @@ namespace DiscHelper
             CBoxMoveFile.Checked = settings.isMove;
             CBoxGenPar.Checked = settings.GeneratePar;
             CBoxFirstFit.Checked = settings.isFirstFit;
+            CboxCutFile.Checked = settings.isCutFile;
             AllSettings = settings;
         }
 
@@ -74,6 +75,7 @@ namespace DiscHelper
             AllSettings.isMove = CBoxMoveFile.Checked;
             AllSettings.GeneratePar = CBoxGenPar.Checked;
             AllSettings.isFirstFit = CBoxFirstFit.Checked;
+            AllSettings.isCutFile = CboxCutFile.Checked;
             AllSettings.SaveSettings("Settings.xml");
             e.Cancel = false;
         }
@@ -167,7 +169,7 @@ namespace DiscHelper
                         {
                             try
                             {
-                                if (Path.GetPathRoot(fileitem.Name) == Path.GetPathRoot(DestFileName))
+                                if (Path.GetPathRoot(fileitem.Name) == Path.GetPathRoot(DestFileName) && fileitem.StartPos == -1)
                                 {
                                     File.Move(fileitem.Name, DestFileName);
                                     worker.ReportProgress((int)100, $"[{FinishedFileCount + 1}/{TotalFileCount}] 已移动 {DestFileName}");
@@ -190,20 +192,25 @@ namespace DiscHelper
 
                             using (FileStream source = new FileStream(fileitem.Name, FileMode.Open, FileAccess.Read))
                             {
-                                long fileLength = source.Length;
+                                long fileLength = fileitem.Size;
                                 using (FileStream dest = new FileStream(DestFileName, FileMode.CreateNew, FileAccess.Write))
                                 {
                                     long totalBytes = 0;
-                                    int currentBlockSize = 0;
-                                    while ((currentBlockSize = source.Read(buffer, 0, buffer.Length)) > 0)
+                                    long RemainSize = fileitem.Size; 
+                                    if(fileitem.StartPos!= -1)
                                     {
+                                        source.Seek(fileitem.StartPos, SeekOrigin.Begin);
+                                    }
+                                    while (true)
+                                    {
+                                        int currentBlockSize = source.Read(buffer, 0, (int)Math.Min(RemainSize, buffer.Length));
+                                        if (currentBlockSize <= 0) break;
                                         totalBytes += currentBlockSize;
+                                        RemainSize -= currentBlockSize;
                                         double percentage = (double)totalBytes * 100.0 / fileLength;
-
                                         dest.Write(buffer, 0, currentBlockSize);
-
                                         worker.ReportProgress((int)percentage, $"[{FinishedFileCount + 1}/{TotalFileCount}] 正在{(isMove ? "移动" : "复制")} [{((totalBytes / 1024) / 1024.0).ToString("F1")} / {((fileLength / 1024) / 1024.0).ToString("F1")} MB] {DestFileName}");
-
+                                        if (RemainSize == 0) break;
                                         if (worker.CancellationPending == true)
                                         {
                                             cancelFlag = true;
@@ -220,7 +227,7 @@ namespace DiscHelper
                                 return;
                             }
 
-                            if (isMove)
+                            if (isMove && fileitem.StartPos == -1)
                             {
                                 File.Delete(fileitem.Name);
                             }
@@ -308,7 +315,7 @@ namespace DiscHelper
             int IterCount = 1;
             foreach (FileItem item in LstFiles.Items)
             {
-                if (item.Size > DiscCapacity)
+                if (item.Size > DiscCapacity && !CboxCutFile.Checked)
                 {
                     NoOKFileSize += item.Size;
                     NotOKFileItems.Add(item);
@@ -365,6 +372,51 @@ namespace DiscHelper
                         IterCount = 100000;
                         break;
                 }
+            }
+
+            if(CboxCutFile.Checked)
+            {
+                List<FileItem> TmpFileItems = new List<FileItem>();
+                long DiscSize = 0;
+                for (int i = 0; i < FileItems.Count; i++)
+                {
+                    FileItem item = FileItems[i];
+                    if (DiscSize + item.Size <= DiscCapacity)
+                    {
+                        DiscSize += item.Size;
+                        if (DiscSize == DiscCapacity)
+                        {
+                            DiscSize = 0;
+                        }
+                        TmpFileItems.Add(item);
+                    }
+                    else
+                    {
+                        long StartPos = 0;
+                        long RemainSize = item.Size;
+                        int Segment = 1;
+                        do
+                        {
+                            FileItem SplitFileItem = new FileItem();
+                            SplitFileItem.Name = item.Name;
+                            SplitFileItem.StartPos = StartPos;
+                            SplitFileItem.Size = Math.Min(DiscCapacity - DiscSize, RemainSize);
+                            SplitFileItem.CreateTime = item.CreateTime;
+                            SplitFileItem.DestName = item.DestName + $".Segment_{Segment.ToString("00")}";
+                            Segment++;
+                            StartPos += SplitFileItem.Size;
+                            DiscSize += SplitFileItem.Size;
+                            RemainSize -= SplitFileItem.Size;
+                            if (DiscSize == DiscCapacity)
+                            {
+                                DiscSize = 0;
+                            }
+                            TmpFileItems.Add(SplitFileItem);
+                        } while (RemainSize>0);
+                    }
+                }
+
+                FileItems = TmpFileItems;
             }
 
             if (FileItems.Count > 0)
@@ -876,6 +928,7 @@ namespace DiscHelper
         public string DestName;
         public long Size;
         public DateTime CreateTime;
+        public long StartPos = -1;
 
         public FileItem(string Name,string DestName = null)
         {
@@ -886,6 +939,11 @@ namespace DiscHelper
             if (DestName == null)
                 this.DestName = Path.GetFileName(Name);
             else this.DestName = DestName;
+        }
+
+        public FileItem()
+        {
+            
         }
 
         public override string ToString()

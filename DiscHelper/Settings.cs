@@ -23,6 +23,7 @@ namespace DiscHelper
         public bool isMove = false;
         public bool GeneratePar = false;
         public bool isFirstFit = false;
+        public bool isCutFile = false;
         public static Settings LoadSettings(string filename)
         {
             try
