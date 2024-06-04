@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainUI));
             this.BtnAddFolder = new System.Windows.Forms.Button();
             this.BtnAddFiles = new System.Windows.Forms.Button();
             this.LstFiles = new System.Windows.Forms.ListBox();
@@ -530,8 +529,8 @@
             this.Controls.Add(this.BtnAllocateDisc);
             this.Controls.Add(this.BtnAddFiles);
             this.Controls.Add(this.BtnAddFolder);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainUI";
+            this.ShowIcon = false;
             this.Text = "DiscHelper";
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscCapacity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscRedundant)).EndInit();

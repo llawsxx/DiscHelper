@@ -98,7 +98,7 @@ namespace DiscHelper
         private void DiscWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             string UserState = e.UserState as string;
-            if(e.ProgressPercentage>=0)
+            if (e.ProgressPercentage >= 0)
                 Text = $"{e.ProgressPercentage}% " + UserState;
             else
                 Text = UserState;
@@ -196,8 +196,8 @@ namespace DiscHelper
                                 using (FileStream dest = new FileStream(DestFileName, FileMode.CreateNew, FileAccess.Write))
                                 {
                                     long totalBytes = 0;
-                                    long RemainSize = fileitem.Size; 
-                                    if(fileitem.StartPos!= -1)
+                                    long RemainSize = fileitem.Size;
+                                    if (fileitem.StartPos != -1)
                                     {
                                         source.Seek(fileitem.StartPos, SeekOrigin.Begin);
                                     }
@@ -294,12 +294,19 @@ namespace DiscHelper
 
         private string ToGigaByte(long bytes)
         {
-            return ((double)bytes / 1024 / 1024 / 1024).ToString("F2")+" GB";
+            return ((double)bytes / 1024 / 1024 / 1024).ToString("F2") + " GB";
         }
 
         private void BinPacking()
         {
+            long DiscCapacity = (long)(NumDiscCapacity.Value - NumDiscRedundant.Value);
+            if (DiscCapacity <= 0)
+            {
+                MessageBox.Show("光盘可用容量小于或等于0", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             List<FileItem> FileItems = new List<FileItem>();
+            List<FileItem> PriorityFileItems = new List<FileItem>();
             List<FileItem> NotOKFileItems = new List<FileItem>();
             List<DiscItem> DiscItems = new List<DiscItem>();
             long OKFileSize = 0;
@@ -309,7 +316,7 @@ namespace DiscHelper
             StringBuilder FileDuplicatePrompt = new StringBuilder();
             LstDiscs.Items.Clear();
             LstDiscFiles.Items.Clear();
-            long DiscCapacity = (long)(NumDiscCapacity.Value - NumDiscRedundant.Value);
+
             long MinLastDiscOccupy = DiscCapacity;
             int MinDiscCount = int.MaxValue;
             int IterCount = 1;
@@ -323,9 +330,18 @@ namespace DiscHelper
                 else
                 {
                     OKFileSize += item.Size;
-                    FileItems.Add(item);
+                    if (item.Priority > 0)
+                    {
+                        PriorityFileItems.Add(item);
+                    }
+                    else
+                    {
+                        FileItems.Add(item);
+                    }
                 }
             }
+
+            PriorityFileItems.Sort((x, y) => x.Priority.CompareTo(y.Priority));
 
             int _Index = CBoxAllocatePolicy.SelectedIndex;
 
@@ -351,7 +367,7 @@ namespace DiscHelper
                     break;
             }
 
-            if(_Index >= 6 && _Index <= 8)//随机排序
+            if (_Index >= 6 && _Index <= 8)//随机排序
             {
                 Random rng = new Random();
                 int n = FileItems.Count;
@@ -374,7 +390,9 @@ namespace DiscHelper
                 }
             }
 
-            if(CboxCutFile.Checked)
+            FileItems.InsertRange(0, PriorityFileItems);
+
+            if (CboxCutFile.Checked)
             {
                 List<FileItem> TmpFileItems = new List<FileItem>();
                 long DiscSize = 0;
@@ -402,6 +420,7 @@ namespace DiscHelper
                             SplitFileItem.StartPos = StartPos;
                             SplitFileItem.Size = Math.Min(DiscCapacity - DiscSize, RemainSize);
                             SplitFileItem.CreateTime = item.CreateTime;
+                            SplitFileItem.Priority = item.Priority;
                             SplitFileItem.DestName = item.DestName + $".Segment_{Segment.ToString("00")}";
                             Segment++;
                             StartPos += SplitFileItem.Size;
@@ -412,7 +431,7 @@ namespace DiscHelper
                                 DiscSize = 0;
                             }
                             TmpFileItems.Add(SplitFileItem);
-                        } while (RemainSize>0);
+                        } while (RemainSize > 0);
                     }
                 }
 
@@ -484,7 +503,7 @@ namespace DiscHelper
 
             if (NotOKFileItems.Count > 0)
             {
-                var NotOKDisc = new DiscItem($"INVALID DISC",-1,-1, (long)NumDiscCapacity.Value);
+                var NotOKDisc = new DiscItem($"INVALID DISC", -1, -1, (long)NumDiscCapacity.Value);
                 NotOKDisc.IsAvailable = false;
                 foreach (var item in NotOKFileItems)
                 {
@@ -658,19 +677,19 @@ namespace DiscHelper
                 return;
             }
 
-            if(LstDiscs.Items.Count == 0)
+            if (LstDiscs.Items.Count == 0)
             {
                 MessageBox.Show("没有文件可输出", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            Dictionary<string,object> Args = new Dictionary<string,object>();
+            Dictionary<string, object> Args = new Dictionary<string, object>();
             Args["isMove"] = CBoxMoveFile.Checked;
             Args["OutputPath"] = TxtOutputPath.Text;
             Args["MaxRedundancySize"] = (long)NumDiscMaxRedundant.Value;
             List<DiscItem> discItems = new List<DiscItem>();
 
-            foreach(DiscItem item in LstDiscs.Items)
+            foreach (DiscItem item in LstDiscs.Items)
             {
                 discItems.Add(item);
             }
@@ -684,12 +703,26 @@ namespace DiscHelper
 
         private void RefreshDiscItem(DiscItem item)
         {
-            for (int i = 0;i< LstDiscs.Items.Count; i++)
+            for (int i = 0; i < LstDiscs.Items.Count; i++)
             {
                 if (LstDiscs.Items[i] == item)
                 {
                     LstDiscs.Items.RemoveAt(i);
                     LstDiscs.Items.Insert(i, item);
+                    break;
+                }
+            }
+        }
+
+
+        private void RefreshFileLstItem(FileItem item)
+        {
+            for (int i = 0; i < LstFiles.Items.Count; i++)
+            {
+                if (LstFiles.Items[i] == item)
+                {
+                    LstFiles.Items.RemoveAt(i);
+                    LstFiles.Items.Insert(i, item);
                     break;
                 }
             }
@@ -724,7 +757,7 @@ namespace DiscHelper
         {
             var item = (ToolStripItem)sender;
             var fileItemIndexes = item.Tag as List<int>;
-            fileItemIndexes.Sort((x,y) => y.CompareTo(x));
+            fileItemIndexes.Sort((x, y) => y.CompareTo(x));
             foreach (var fileItemIndex in fileItemIndexes)
             {
                 CurrentDiscItem.RemoveFileItem(fileItemIndex);
@@ -768,7 +801,7 @@ namespace DiscHelper
         }
         private void LstDiscFiles_MouseDown(object sender, MouseEventArgs e)
         {
-            if(DiscWorker.IsBusy) return;//DiscWorker运行中，DiscItem里面的内容不可修改
+            if (DiscWorker.IsBusy) return;//DiscWorker运行中，DiscItem里面的内容不可修改
             if (e.Button == MouseButtons.Right)
             {
                 if (LstDiscFiles.SelectedItems.Count > 0)
@@ -787,7 +820,7 @@ namespace DiscHelper
                         if (discItem != CurrentDiscItem && discItem.Remain >= fileSize)
                         {
                             var menuItem = DiscHelperMenuStrip.Items.Add("移动到 " + discItem.Name);
-                            menuItem.Tag = new Tuple<DiscItem, List<int>>( discItem, fileItemIndexes);
+                            menuItem.Tag = new Tuple<DiscItem, List<int>>(discItem, fileItemIndexes);
                             menuItem.Click += LstDiscFilesMove_Click;
                         }
                     }
@@ -795,7 +828,7 @@ namespace DiscHelper
                     if (fileSize <= NumDiscCapacity.Value)
                     {
                         var menuItem = DiscHelperMenuStrip.Items.Add("移动到新光盘");
-                        menuItem.Tag = new Tuple< DiscItem, List<int>>( null, fileItemIndexes);
+                        menuItem.Tag = new Tuple<DiscItem, List<int>>(null, fileItemIndexes);
                         menuItem.Click += LstDiscFilesMove_Click;
                     }
 
@@ -828,7 +861,7 @@ namespace DiscHelper
                 currentDisc.AddFileItem(fileItem);
             }
             RefreshDiscItem(currentDisc);
-            if(currentDisc == CurrentDiscItem)
+            if (currentDisc == CurrentDiscItem)
             {
                 LstDiscs.SelectedItem = currentDisc;
             }
@@ -837,12 +870,44 @@ namespace DiscHelper
         private void LstFilesDeleteItem_Click(object sender, EventArgs e)
         {
             var item = (ToolStripItem)sender;
-            var fileItems = item.Tag as  List<FileItem>;
-            foreach(var fileItem in fileItems)
+            var fileItems = item.Tag as List<FileItem>;
+            foreach (var fileItem in fileItems)
             {
                 LstFiles.Items.Remove(fileItem);
             }
         }
+
+        private void LstFilesSetPriority_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripItem)sender;
+            var fileItems = item.Tag as List<FileItem>;
+            int LastPriority = 0;
+            foreach (FileItem fileItem in LstFiles.Items)
+            {
+                if (fileItem.Priority > LastPriority)
+                {
+                    LastPriority = fileItem.Priority;
+                }
+            }
+
+            foreach (var fileItem in fileItems)
+            {
+                fileItem.Priority = ++LastPriority;
+                RefreshFileLstItem(fileItem);
+            }
+        }
+
+        private void LstFilesUnsetPriority_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripItem)sender;
+            var fileItems = item.Tag as List<FileItem>;
+            foreach (var fileItem in fileItems)
+            {
+                fileItem.Priority = 0;
+                RefreshFileLstItem(fileItem);
+            }
+        }
+
 
         private void LstFiles_MouseDown(object sender, MouseEventArgs e)
         {
@@ -854,21 +919,22 @@ namespace DiscHelper
                     DiscHelperMenuStrip.Items.Clear();
                     List<FileItem> fileItems = new List<FileItem>();
                     long fileSize = 0;
-                    foreach(FileItem selectedItem in LstFiles.SelectedItems) {
+                    foreach (FileItem selectedItem in LstFiles.SelectedItems)
+                    {
                         fileItems.Add(selectedItem);
                         fileSize += selectedItem.Size;
                     }
-                    foreach(DiscItem discItem in LstDiscs.Items)
+                    foreach (DiscItem discItem in LstDiscs.Items)
                     {
-                        if(discItem.Remain >= fileSize)
+                        if (discItem.Remain >= fileSize)
                         {
-                            var menuItem = DiscHelperMenuStrip.Items.Add("添加到 "+ discItem.Name);
+                            var menuItem = DiscHelperMenuStrip.Items.Add("添加到 " + discItem.Name);
                             menuItem.Tag = new Tuple<DiscItem, List<FileItem>>(discItem, fileItems);
                             menuItem.Click += LstFilesItem_Click;
                         }
                     }
 
-                    if(fileSize <= NumDiscCapacity.Value)
+                    if (fileSize <= NumDiscCapacity.Value)
                     {
                         var menuItem = DiscHelperMenuStrip.Items.Add("添加到新光盘");
                         menuItem.Tag = new Tuple<DiscItem, List<FileItem>>(null, fileItems);
@@ -878,7 +944,15 @@ namespace DiscHelper
                     var deleteMenuItem = DiscHelperMenuStrip.Items.Add("移除文件");
                     deleteMenuItem.Tag = fileItems;
                     deleteMenuItem.Click += LstFilesDeleteItem_Click;
-                    DiscHelperMenuStrip.Show(LstFiles,e.Location);
+
+                    var priorityMenuItem = DiscHelperMenuStrip.Items.Add("优先分配");
+                    priorityMenuItem.Tag = fileItems;
+                    priorityMenuItem.Click += LstFilesSetPriority_Click;
+
+                    var unsetPriorityMenuItem = DiscHelperMenuStrip.Items.Add("取消优先分配");
+                    unsetPriorityMenuItem.Tag = fileItems;
+                    unsetPriorityMenuItem.Click += LstFilesUnsetPriority_Click;
+                    DiscHelperMenuStrip.Show(LstFiles, e.Location);
                 }
             }
         }
@@ -888,7 +962,7 @@ namespace DiscHelper
         {
             var item = (ToolStripItem)sender;
             var discItems = item.Tag as List<DiscItem>;
-            foreach(var discItem in discItems)
+            foreach (var discItem in discItems)
             {
                 LstDiscs.Items.Remove(discItem);
             }
@@ -929,8 +1003,8 @@ namespace DiscHelper
         public long Size;
         public DateTime CreateTime;
         public long StartPos = -1;
-
-        public FileItem(string Name,string DestName = null)
+        public int Priority = 0;
+        public FileItem(string Name, string DestName = null)
         {
             FileInfo file = new FileInfo(Name);
             this.Name = Name;
@@ -943,12 +1017,12 @@ namespace DiscHelper
 
         public FileItem()
         {
-            
+
         }
 
         public override string ToString()
         {
-            return $"[{((double)Size / 1024 / 1024).ToString("F2")} MB] {(DestName == null ? Name : DestName)}";
+            return $"[{(Priority > 0 ? $"{Priority}★ " : "")}{((double)Size / 1024 / 1024).ToString("F2")} MB] {(DestName == null ? Name : DestName)}";
         }
     }
 
@@ -970,7 +1044,7 @@ namespace DiscHelper
             }
         }
 
-        public DiscItem(string Name,decimal BucketNum,decimal DiscInBucketNum,long Capacity)
+        public DiscItem(string Name, decimal BucketNum, decimal DiscInBucketNum, long Capacity)
         {
             this.Name = Name;
             this.Capacity = Capacity;
