@@ -102,7 +102,7 @@
             this.LstFiles.Location = new System.Drawing.Point(12, 82);
             this.LstFiles.Name = "LstFiles";
             this.LstFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.LstFiles.Size = new System.Drawing.Size(517, 123);
+            this.LstFiles.Size = new System.Drawing.Size(517, 140);
             this.LstFiles.TabIndex = 1;
             this.LstFiles.DragDrop += new System.Windows.Forms.DragEventHandler(this.LstFiles_DragDrop);
             this.LstFiles.DragEnter += new System.Windows.Forms.DragEventHandler(this.LstFiles_DragEnter);
@@ -155,10 +155,10 @@
             this.LstDiscs.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.LstDiscs.FormattingEnabled = true;
             this.LstDiscs.ItemHeight = 17;
-            this.LstDiscs.Location = new System.Drawing.Point(14, 246);
+            this.LstDiscs.Location = new System.Drawing.Point(14, 263);
             this.LstDiscs.Name = "LstDiscs";
             this.LstDiscs.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.LstDiscs.Size = new System.Drawing.Size(222, 140);
+            this.LstDiscs.Size = new System.Drawing.Size(247, 123);
             this.LstDiscs.TabIndex = 1;
             this.LstDiscs.SelectedIndexChanged += new System.EventHandler(this.LstDiscs_SelectedIndexChanged);
             this.LstDiscs.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LstDiscs_MouseDown);
@@ -172,10 +172,10 @@
             this.LstDiscFiles.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.LstDiscFiles.FormattingEnabled = true;
             this.LstDiscFiles.ItemHeight = 17;
-            this.LstDiscFiles.Location = new System.Drawing.Point(242, 246);
+            this.LstDiscFiles.Location = new System.Drawing.Point(267, 263);
             this.LstDiscFiles.Name = "LstDiscFiles";
             this.LstDiscFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.LstDiscFiles.Size = new System.Drawing.Size(288, 140);
+            this.LstDiscFiles.Size = new System.Drawing.Size(263, 123);
             this.LstDiscFiles.TabIndex = 1;
             this.LstDiscFiles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LstDiscFiles_MouseDown);
             // 
@@ -183,7 +183,7 @@
             // 
             this.BtnTempFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.BtnTempFolder.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnTempFolder.Location = new System.Drawing.Point(14, 395);
+            this.BtnTempFolder.Location = new System.Drawing.Point(14, 392);
             this.BtnTempFolder.Name = "BtnTempFolder";
             this.BtnTempFolder.Size = new System.Drawing.Size(106, 29);
             this.BtnTempFolder.TabIndex = 0;
@@ -195,7 +195,7 @@
             // 
             this.BtnOutputFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnOutputFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnOutputFile.Location = new System.Drawing.Point(424, 395);
+            this.BtnOutputFile.Location = new System.Drawing.Point(424, 392);
             this.BtnOutputFile.Name = "BtnOutputFile";
             this.BtnOutputFile.Size = new System.Drawing.Size(105, 29);
             this.BtnOutputFile.TabIndex = 0;
@@ -207,7 +207,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label2.Location = new System.Drawing.Point(174, 217);
+            this.label2.Location = new System.Drawing.Point(174, 234);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(44, 17);
             this.label2.TabIndex = 3;
@@ -246,7 +246,7 @@
             this.CBoxGenPar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxGenPar.AutoSize = true;
             this.CBoxGenPar.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxGenPar.Location = new System.Drawing.Point(267, 401);
+            this.CBoxGenPar.Location = new System.Drawing.Point(267, 398);
             this.CBoxGenPar.Name = "CBoxGenPar";
             this.CBoxGenPar.Size = new System.Drawing.Size(70, 21);
             this.CBoxGenPar.TabIndex = 5;
@@ -256,7 +256,7 @@
             // button4
             // 
             this.button4.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button4.Location = new System.Drawing.Point(12, 211);
+            this.button4.Location = new System.Drawing.Point(12, 228);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(56, 29);
             this.button4.TabIndex = 0;
@@ -295,7 +295,7 @@
             // NumDiscInBucket
             // 
             this.NumDiscInBucket.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.NumDiscInBucket.Location = new System.Drawing.Point(328, 214);
+            this.NumDiscInBucket.Location = new System.Drawing.Point(328, 231);
             this.NumDiscInBucket.Maximum = new decimal(new int[] {
             -1530494977,
             232830,
@@ -319,7 +319,7 @@
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label5.Location = new System.Drawing.Point(272, 217);
+            this.label5.Location = new System.Drawing.Point(272, 234);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(56, 17);
             this.label5.TabIndex = 3;
@@ -329,7 +329,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label6.Location = new System.Drawing.Point(77, 217);
+            this.label6.Location = new System.Drawing.Point(77, 234);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(32, 17);
             this.label6.TabIndex = 3;
@@ -338,7 +338,7 @@
             // TxtDiscPrefix
             // 
             this.TxtDiscPrefix.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.TxtDiscPrefix.Location = new System.Drawing.Point(108, 214);
+            this.TxtDiscPrefix.Location = new System.Drawing.Point(108, 231);
             this.TxtDiscPrefix.Name = "TxtDiscPrefix";
             this.TxtDiscPrefix.Size = new System.Drawing.Size(58, 23);
             this.TxtDiscPrefix.TabIndex = 7;
@@ -346,7 +346,7 @@
             // NumDiscBucket
             // 
             this.NumDiscBucket.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.NumDiscBucket.Location = new System.Drawing.Point(224, 214);
+            this.NumDiscBucket.Location = new System.Drawing.Point(224, 231);
             this.NumDiscBucket.Maximum = new decimal(new int[] {
             -1530494977,
             232830,
@@ -371,7 +371,7 @@
             this.CBoxMoveFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxMoveFile.AutoSize = true;
             this.CBoxMoveFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxMoveFile.Location = new System.Drawing.Point(342, 401);
+            this.CBoxMoveFile.Location = new System.Drawing.Point(342, 398);
             this.CBoxMoveFile.Name = "CBoxMoveFile";
             this.CBoxMoveFile.Size = new System.Drawing.Size(75, 21);
             this.CBoxMoveFile.TabIndex = 5;
@@ -383,7 +383,7 @@
             this.TxtOutputPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.TxtOutputPath.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.TxtOutputPath.Location = new System.Drawing.Point(126, 398);
+            this.TxtOutputPath.Location = new System.Drawing.Point(126, 395);
             this.TxtOutputPath.Name = "TxtOutputPath";
             this.TxtOutputPath.Size = new System.Drawing.Size(135, 23);
             this.TxtOutputPath.TabIndex = 7;
@@ -395,7 +395,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.TxtCMDOutput.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.TxtCMDOutput.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.TxtCMDOutput.Location = new System.Drawing.Point(15, 430);
+            this.TxtCMDOutput.Location = new System.Drawing.Point(15, 429);
             this.TxtCMDOutput.Name = "TxtCMDOutput";
             this.TxtCMDOutput.Size = new System.Drawing.Size(517, 102);
             this.TxtCMDOutput.TabIndex = 8;
@@ -446,7 +446,7 @@
             // NumMaxDiscInBucket
             // 
             this.NumMaxDiscInBucket.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.NumMaxDiscInBucket.Location = new System.Drawing.Point(464, 214);
+            this.NumMaxDiscInBucket.Location = new System.Drawing.Point(464, 231);
             this.NumMaxDiscInBucket.Maximum = new decimal(new int[] {
             -1530494977,
             232830,
@@ -470,7 +470,7 @@
             // 
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label8.Location = new System.Drawing.Point(378, 217);
+            this.label8.Location = new System.Drawing.Point(378, 234);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(80, 17);
             this.label8.TabIndex = 3;

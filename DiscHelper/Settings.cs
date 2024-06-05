@@ -20,6 +20,7 @@ namespace DiscHelper
         public long MaxDiscInBucketNum = 50;
         public int AllocatePolicy = 0;
         public string OutputFolder = "DISC";
+        public string ParExePath = @"MultiPar\par2j64.exe";
         public bool isMove = false;
         public bool GeneratePar = false;
         public bool isFirstFit = false;
