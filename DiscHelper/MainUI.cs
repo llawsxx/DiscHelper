@@ -8,9 +8,11 @@ using System.Linq;
 using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
+using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace DiscHelper
 {
@@ -18,6 +20,7 @@ namespace DiscHelper
     {
         private BackgroundWorker DiscWorker = new BackgroundWorker();
         DiscItem CurrentDiscItem = null;
+        NameGenerator DiscNameGenerator = null;
         Settings AllSettings;
         [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
         private static extern int StrCmpLogicalW(string psz1, string psz2);
@@ -41,10 +44,7 @@ namespace DiscHelper
             NumDiscCapacity.Value = settings.DiskCapacity;
             NumDiscRedundant.Value = settings.MinDiscRedundant;
             NumDiscMaxRedundant.Value = settings.MaxDiscRedundant;
-            TxtDiscPrefix.Text = settings.DiscPrefix;
-            NumDiscBucket.Value = settings.DiscBucketNum;
-            NumDiscInBucket.Value = settings.DiscInBucketNum;
-            NumMaxDiscInBucket.Value = settings.MaxDiscInBucketNum;
+            TxtDiscNamePattern.Text = settings.DiscNamePattern;
             CBoxAllocatePolicy.SelectedIndex = settings.AllocatePolicy;
             TxtOutputPath.Text = settings.OutputFolder;
             CBoxMoveFile.Checked = settings.isMove;
@@ -52,6 +52,16 @@ namespace DiscHelper
             CBoxFirstFit.Checked = settings.isFirstFit;
             CboxCutFile.Checked = settings.isCutFile;
             AllSettings = settings;
+        }
+
+        private string GetDiscName()
+        {
+            if(DiscNameGenerator == null)
+            {
+                DiscNameGenerator = new NameGenerator(TxtDiscNamePattern.Text);
+            }
+
+            return DiscNameGenerator.Next();
         }
 
         private void DiskHelper_FormClosing(object sender, FormClosingEventArgs e)
@@ -66,10 +76,7 @@ namespace DiscHelper
             AllSettings.DiskCapacity = (long)NumDiscCapacity.Value;
             AllSettings.MinDiscRedundant = (long)NumDiscRedundant.Value;
             AllSettings.MaxDiscRedundant = (long)NumDiscMaxRedundant.Value;
-            AllSettings.DiscPrefix = TxtDiscPrefix.Text;
-            AllSettings.DiscBucketNum = (long)NumDiscBucket.Value;
-            AllSettings.DiscInBucketNum = (long)NumDiscInBucket.Value;
-            AllSettings.MaxDiscInBucketNum = (long)NumMaxDiscInBucket.Value;
+            AllSettings.DiscNamePattern = TxtDiscNamePattern.Text;
             AllSettings.AllocatePolicy = CBoxAllocatePolicy.SelectedIndex;
             AllSettings.OutputFolder = TxtOutputPath.Text;
             AllSettings.isMove = CBoxMoveFile.Checked;
@@ -317,9 +324,9 @@ namespace DiscHelper
             List<DiscItem> DiscItems = new List<DiscItem>();
             long OKFileSize = 0;
             long NoOKFileSize = 0;
-            var MaxDiscInBucket = NumMaxDiscInBucket.Value;
-            var DiscPrefix = TxtDiscPrefix.Text;
+            var DiscPrefix = TxtDiscNamePattern.Text;
             StringBuilder FileDuplicatePrompt = new StringBuilder();
+            StringBuilder DiscDuplicatePrompt = new StringBuilder();
             LstDiscs.Items.Clear();
             LstDiscFiles.Items.Clear();
 
@@ -454,8 +461,6 @@ namespace DiscHelper
                 var Tick = Environment.TickCount;
                 for (int c = 0; c < IterCount; c++)
                 {
-                    var DiscBucket = NumDiscBucket.Value;
-                    var DiscInBucket = NumDiscInBucket.Value;
                     if (c > 0)
                     {
                         Random rng = new Random(Tick + IterCount);
@@ -487,12 +492,7 @@ namespace DiscHelper
 
                         if (choose == -1)
                         {
-                            TempDiscItems.Add(new DiscItem($"{DiscPrefix}Bucket_{DiscBucket}_Disc_{DiscInBucket}", DiscBucket, DiscInBucket, (long)NumDiscCapacity.Value));
-                            if (++DiscInBucket > MaxDiscInBucket)
-                            {
-                                DiscInBucket = 1;
-                                DiscBucket++;
-                            }
+                            TempDiscItems.Add(new DiscItem(GetDiscName(), (long)NumDiscCapacity.Value));
                             choose = TempDiscItems.Count - 1;
                         }
                         TempDiscItems[choose].AddFileItem(FileItems[i]);
@@ -514,7 +514,7 @@ namespace DiscHelper
 
             if (NotOKFileItems.Count > 0)
             {
-                var NotOKDisc = new DiscItem($"INVALID DISC", -1, -1, (long)NumDiscCapacity.Value);
+                var NotOKDisc = new DiscItem($"[INVALID DISC]", (long)NumDiscCapacity.Value);
                 NotOKDisc.IsAvailable = false;
                 foreach (var item in NotOKFileItems)
                 {
@@ -556,6 +556,25 @@ namespace DiscHelper
 
             TxtCMDOutput.AppendText($"总数 {FileItems.Count + NotOKFileItems.Count} 分配 {FileItems.Count} ({ToGigaByte(OKFileSize)}) 个 失败 {NotOKFileItems.Count} ({ToGigaByte(NoOKFileSize)}) 个" +
                 $" 空间浪费 {ToGigaByte(TotalDiscRemain)} 利用率 {((double)TotalDiscSize / (DiscCapacity * TotalDiscAvailable)).ToString("F4")} 光盘用量 {TotalDiscAvailable}{Environment.NewLine}");
+
+            var DuplicateDiscItems = DiscItems.GroupBy(x => x.Name).Where(g => g.Count() > 1);
+            foreach (var item2 in DuplicateDiscItems)
+            {
+                foreach (var item3 in item2)
+                {
+                    DiscDuplicatePrompt.AppendLine(item3.Name);
+                    break;
+                }
+            }
+
+            if (DiscDuplicatePrompt.Length > 0)
+            {
+                string PromptText = "以下光盘名称重复，请检查名称模版" +
+                Environment.NewLine + DiscDuplicatePrompt.ToString();
+                TxtCMDOutput.AppendText(PromptText);
+                MessageBox.Show(PromptText, "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
 
             if (FileDuplicatePrompt.Length > 0)
             {
@@ -663,6 +682,7 @@ namespace DiscHelper
 
         private void BtnAllocateDisc_Click(object sender, EventArgs e)
         {
+            DiscNameGenerator = new NameGenerator(TxtDiscNamePattern.Text);
             BinPacking();
         }
 
@@ -751,25 +771,7 @@ namespace DiscHelper
 
         private DiscItem NewDisc()
         {
-            DiscItem LastDiscItem = LstDiscs.Items.Count > 0 ? LstDiscs.Items[LstDiscs.Items.Count - 1] as DiscItem : null;
-            decimal DiscBucket;
-            decimal DiscInBucket;
-            if (LastDiscItem != null)
-            {
-                DiscBucket = LastDiscItem.BucketNum;
-                DiscInBucket = LastDiscItem.DiscInBucketNum;
-                if (++DiscInBucket > NumMaxDiscInBucket.Value)
-                {
-                    DiscInBucket = 1;
-                    DiscBucket++;
-                }
-            }
-            else
-            {
-                DiscBucket = NumDiscBucket.Value;
-                DiscInBucket = NumDiscInBucket.Value;
-            }
-            var newDisc = new DiscItem($"{TxtDiscPrefix.Text}Bucket_{DiscBucket}_Disc_{DiscInBucket}", DiscBucket, DiscInBucket, (long)NumDiscCapacity.Value);
+            var newDisc = new DiscItem(GetDiscName(), (long)NumDiscCapacity.Value);
             LstDiscs.Items.Add(newDisc);
             return newDisc;
         }
@@ -822,7 +824,7 @@ namespace DiscHelper
         }
         private void LstDiscFiles_MouseDown(object sender, MouseEventArgs e)
         {
-            if (DiscWorker.IsBusy) return;//DiscWorker运行中，DiscItem里面的内容不可修改
+            if (DiscWorker.IsBusy) return;//DiscWorker运行中，不可修改DiscItem中的FileItems
             if (e.Button == MouseButtons.Right)
             {
                 if (LstDiscFiles.SelectedItems.Count > 0)
@@ -967,13 +969,17 @@ namespace DiscHelper
                         fileSize += selectedItem.Size;
                     }
                     ToolStripItem menuItem;
-                    foreach (DiscItem discItem in LstDiscs.Items)
+
+                    if (!DiscWorker.IsBusy)//DiscWorker运行中，不可修改DiscItem中的FileItems
                     {
-                        if (discItem.Remain >= fileSize)
+                        foreach (DiscItem discItem in LstDiscs.Items)
                         {
-                            menuItem = DiscHelperMenuStrip.Items.Add("添加到 " + discItem.Name);
-                            menuItem.Tag = new Tuple<DiscItem, List<FileItem>>(discItem, fileItems);
-                            menuItem.Click += LstFilesItem_Click;
+                            if (discItem.Remain >= fileSize)
+                            {
+                                menuItem = DiscHelperMenuStrip.Items.Add("添加到 " + discItem.Name);
+                                menuItem.Tag = new Tuple<DiscItem, List<FileItem>>(discItem, fileItems);
+                                menuItem.Click += LstFilesItem_Click;
+                            }
                         }
                     }
 
@@ -1119,8 +1125,6 @@ namespace DiscHelper
         public List<FileItem> FileItems = new List<FileItem>();
         public long Size;
         public long Capacity;
-        public decimal BucketNum;
-        public decimal DiscInBucketNum;
         public bool IsAvailable = true;
         public bool IsGenPar = true;
 
@@ -1132,12 +1136,10 @@ namespace DiscHelper
             }
         }
 
-        public DiscItem(string Name, decimal BucketNum, decimal DiscInBucketNum, long Capacity)
+        public DiscItem(string Name, long Capacity)
         {
             this.Name = Name;
             this.Capacity = Capacity;
-            this.BucketNum = BucketNum;
-            this.DiscInBucketNum = DiscInBucketNum;
         }
 
         public void AddFileItem(FileItem item)
@@ -1166,4 +1168,69 @@ namespace DiscHelper
                 return $"{Name}{GenParStr}";
         }
     }
+
+    
+    public class NameGenerator
+    {
+        public class NumInfo
+        {
+            public int Current;
+            public int Max;
+            public int IndexInPattern;
+            public int LengthInPattern;
+        }
+        public string NamePattern;
+        public List<NumInfo> NumInfos = new List<NumInfo>();
+        public NameGenerator(string NamePattern)
+        {
+            this.NamePattern = NamePattern;
+            var rgx1 = new Regex(@"\{(\d+:\d+|\d+)\}");
+            var matches = rgx1.Matches(NamePattern);
+            foreach (Match match in matches)
+            {
+                string SubString = match.Groups[1].Value;
+                int IndexInPattern = match.Index;
+                int LengthInPattern = match.Length;
+                var NumI = new NumInfo();
+                NumI.IndexInPattern = IndexInPattern;
+                NumI.LengthInPattern = LengthInPattern;
+                if (SubString.Contains(":"))
+                {
+                    string[] SubStringSplit = SubString.Split(':');
+                    NumI.Current = Int32.Parse(SubStringSplit[0]);
+                    NumI.Max = Int32.Parse(SubStringSplit[1]);
+                }
+                else
+                {
+                    NumI.Current = Int32.Parse(SubString);
+                    NumI.Max = int.MaxValue;
+                }
+                NumInfos.Add(NumI);
+            }
+        }
+
+        public string Next()
+        {
+            StringBuilder Result = new StringBuilder();
+            int NamePatternNextIndex = 0;
+            foreach (var NumI in NumInfos) {
+                Result.Append(NamePattern.Substring(NamePatternNextIndex, NumI.IndexInPattern - NamePatternNextIndex));
+                Result.Append(NumI.Current.ToString());
+                NamePatternNextIndex = NumI.IndexInPattern + NumI.LengthInPattern;
+            }
+
+            Result.Append(NamePattern.Substring(NamePatternNextIndex));
+            for (var i = NumInfos.Count - 1; i >= 0; i--)
+            {
+                var NumI = NumInfos[i];
+                NumI.Current++;
+                if (NumI.Current > NumI.Max)
+                {
+                    NumI.Current = 1;
+                }else break;
+            }
+            return Result.ToString();
+        }
+    }
+
 }

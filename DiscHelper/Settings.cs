@@ -14,10 +14,7 @@ namespace DiscHelper
         public long DiskCapacity = 25000000000;
         public long MinDiscRedundant = 52428800;
         public long MaxDiscRedundant = 209715200;
-        public string DiscPrefix = "";
-        public long DiscBucketNum = 1;
-        public long DiscInBucketNum = 1;
-        public long MaxDiscInBucketNum = 50;
+        public string DiscNamePattern = "Bucket_{1}_Disc_{1:50}";
         public int AllocatePolicy = 0;
         public string OutputFolder = "DISC";
         public string ParExePath = @"MultiPar\par2j64.exe";
