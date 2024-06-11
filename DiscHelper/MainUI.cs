@@ -335,7 +335,7 @@ namespace DiscHelper
             int IterCount = 1;
             foreach (FileItem item in LstFiles.Items)
             {
-                if (item.Size > DiscCapacity && !CboxCutFile.Checked)
+                if (item.Size > DiscCapacity && (!CboxCutFile.Checked || item.NoCut))
                 {
                     NoOKFileSize += item.Size;
                     NotOKFileItems.Add(item);
@@ -414,7 +414,8 @@ namespace DiscHelper
             {
                 List<FileItem> TmpFileItems = new List<FileItem>();
                 long DiscSize = 0;
-                for (int i = 0; i < FileItems.Count; i++)
+                int i = 0;
+                while(i < FileItems.Count)
                 {
                     FileItem item = FileItems[i];
                     if (DiscSize + item.Size <= DiscCapacity)
@@ -428,6 +429,36 @@ namespace DiscHelper
                     }
                     else
                     {
+                        if (item.NoCut)
+                        {
+                            bool FoundOKFile = false;
+                            for(int j = i + 1; j < FileItems.Count;j++) //目前暂时只能从后面找符合条件的FileItem
+                            {
+                                if (!FileItems[j].NoCut || DiscSize + FileItems[j].Size <= DiscCapacity)
+                                {
+                                    var temp = FileItems[i];
+                                    FileItems[i] = FileItems[j];
+                                    FileItems[j] = temp;
+                                    FoundOKFile = true;
+                                    break;
+                                }
+                            }
+                            if (FoundOKFile)
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                for (int j = i; j < FileItems.Count; j++)//后面已经没有可以Cut或DiscSize + FileItems[j].Size <= DiscCapacity的文件，做不到刚好塞满DiscCapacity，只能全部原样添加进去了
+                                {
+                                    TmpFileItems.Add(FileItems[j]);
+                                }
+                                break;
+                            }
+                        }
+
+                        long MaxSegmentNum = 1 + ((item.Size - (DiscCapacity - DiscSize) - 1) / DiscCapacity) + 1;
+                        int PadWidth = MaxSegmentNum.ToString().Length;
                         long StartPos = 0;
                         long RemainSize = item.Size;
                         int Segment = 1;
@@ -439,7 +470,7 @@ namespace DiscHelper
                             SplitFileItem.Size = Math.Min(DiscCapacity - DiscSize, RemainSize);
                             SplitFileItem.CreateTime = item.CreateTime;
                             SplitFileItem.Priority = item.Priority;
-                            SplitFileItem.DestName = item.DestName + $".Segment_{Segment.ToString("00")}";
+                            SplitFileItem.DestName = item.DestName + $".Segment_{Segment.ToString().PadLeft(PadWidth,'0')}";
                             Segment++;
                             StartPos += SplitFileItem.Size;
                             DiscSize += SplitFileItem.Size;
@@ -451,6 +482,7 @@ namespace DiscHelper
                             TmpFileItems.Add(SplitFileItem);
                         } while (RemainSize > 0);
                     }
+                    i++;
                 }
 
                 FileItems = TmpFileItems;
@@ -502,7 +534,6 @@ namespace DiscHelper
                     {
                         DiscItems = TempDiscItems;
                         MinDiscCount = TempDiscItems.Count;
-
                     }
                     else if (TempDiscItems.Count == MinDiscCount && TempDiscItems[TempDiscItems.Count - 1].Size < MinLastDiscOccupy)
                     {
@@ -952,6 +983,17 @@ namespace DiscHelper
             }
         }
 
+        private void LstFilesTriggerCut_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripItem)sender;
+            var fileItems = item.Tag as List<FileItem>;
+            foreach (var fileItem in fileItems)
+            {
+                fileItem.NoCut = !fileItem.NoCut;
+                RefreshFileLstItem(fileItem);
+            }
+        }
+
 
         private void LstFiles_MouseDown(object sender, MouseEventArgs e)
         {
@@ -1005,6 +1047,10 @@ namespace DiscHelper
                     menuItem = DiscHelperMenuStrip.Items.Add("取消优先/最后分配");
                     menuItem.Tag = fileItems;
                     menuItem.Click += LstFilesUnsetPriority_Click;
+
+                    menuItem = DiscHelperMenuStrip.Items.Add("允许/禁止分割");
+                    menuItem.Tag = fileItems;
+                    menuItem.Click += LstFilesTriggerCut_Click;
                     DiscHelperMenuStrip.Show(LstFiles, e.Location);
                 }
             }
@@ -1092,6 +1138,7 @@ namespace DiscHelper
         public long Size;
         public DateTime CreateTime;
         public long StartPos = -1;
+        public bool NoCut = false;
         public int Priority = 0;
         public FileItem(string Name, string DestName = null)
         {
@@ -1111,11 +1158,13 @@ namespace DiscHelper
 
         public override string ToString()
         {
-            string PriorityStr = "";
+            string ExtraStr = "";
 
-            if (Priority > 0) PriorityStr = $"{Priority}▲ ";
-            else if(Priority < 0) PriorityStr = $"{-Priority}▼ ";
-            return $"[{PriorityStr}{((double)Size / 1024 / 1024).ToString("F2")} MB] {(DestName == null ? Name : DestName)}";
+            if (Priority > 0) ExtraStr = $"{Priority}▲ ";
+            else if(Priority < 0) ExtraStr = $"{-Priority}▼ ";
+
+            if (NoCut) ExtraStr += "NO CUT ";
+            return $"[{ExtraStr}{((double)Size / 1024 / 1024).ToString("F2")} MB] {(DestName == null ? Name : DestName)}";
         }
     }
 
