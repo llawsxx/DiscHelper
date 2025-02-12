@@ -154,6 +154,7 @@ namespace DiscHelper
             bool GenPar = (bool)Args["GenPar"];
             long MaxRedundancySize = (long)Args["MaxRedundancySize"];
             string OutputPath = Args["OutputPath"] as string;
+            OutputPath = Path.GetFullPath(OutputPath);
             string ParExePath = Args["ParExePath"] as string;
             long TotalFileCount = 0;
             long FinishedFileCount = 0;
