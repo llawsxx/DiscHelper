@@ -51,6 +51,7 @@ namespace DiscHelper
             CBoxGenPar.Checked = settings.GeneratePar;
             CBoxFirstFit.Checked = settings.isFirstFit;
             CboxCutFile.Checked = settings.isCutFile;
+            CBoxGenFileList.Checked = settings.GenerateFileList;
             AllSettings = settings;
         }
 
@@ -73,6 +74,15 @@ namespace DiscHelper
                 return;
             }
 
+            if (LstDiscFiles.Items.Count > 0 || LstFiles.Items.Count > 0)
+            {
+                if (MessageBox.Show("是否确认关闭？", "警告", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
             AllSettings.DiskCapacity = (long)NumDiscCapacity.Value;
             AllSettings.MinDiscRedundant = (long)NumDiscRedundant.Value;
             AllSettings.MaxDiscRedundant = (long)NumDiscMaxRedundant.Value;
@@ -83,6 +93,7 @@ namespace DiscHelper
             AllSettings.GeneratePar = CBoxGenPar.Checked;
             AllSettings.isFirstFit = CBoxFirstFit.Checked;
             AllSettings.isCutFile = CboxCutFile.Checked;
+            AllSettings.GenerateFileList = CBoxGenFileList.Checked;
             AllSettings.SaveSettings("Settings.xml");
             e.Cancel = false;
         }
@@ -109,6 +120,29 @@ namespace DiscHelper
                 Text = $"{e.ProgressPercentage}% " + UserState;
             else
                 Text = UserState;
+        }
+
+        private void OutputFileListTxt(List<DiscItem> discItems)
+        {
+            string OutputPath = TxtOutputPath.Text;
+            Directory.CreateDirectory(OutputPath);
+            foreach (var discItem in discItems)
+            {
+                string OutputName = Path.Combine(OutputPath, discItem.Name);
+                using (FileStream fs = new FileStream(OutputName + ".txt", FileMode.Create))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
+                    {
+                        sw.WriteLine($"{discItem.Name}");
+                        sw.WriteLine($"{ToGigaByte(discItem.Size)} ({discItem.Size})");
+                        sw.WriteLine($"{DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssK")}");
+                        foreach (var fileItem in discItem.FileItems)
+                        {
+                            sw.WriteLine(fileItem.ToStringSimple());
+                        }
+                    }
+                }
+            }
         }
 
         private void DiscWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -769,7 +803,10 @@ namespace DiscHelper
                 MessageBox.Show("没有文件可输出", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
+            if (CBoxGenFileList.Checked)
+            {
+                OutputFileListTxt(discItems);
+            }
             OutputFileDoWork(discItems);
         }
 
@@ -1072,7 +1109,18 @@ namespace DiscHelper
         private void LstDiscsItemOutput_Click(object sender, EventArgs e)
         {
             var item = (ToolStripItem)sender;
+            if (CBoxGenFileList.Checked)
+            {
+                OutputFileListTxt(item.Tag as List<DiscItem>);
+            }
             OutputFileDoWork(item.Tag as List<DiscItem>);
+        }
+
+        private void LstDiscsItemOutputFileList_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripItem)sender;
+            OutputFileListTxt(item.Tag as List<DiscItem>);
+            MessageBox.Show("输出成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
 
@@ -1113,6 +1161,9 @@ namespace DiscHelper
                         menuItem.Click += LstDiscsItemOutput_Click;
                     }
 
+                    menuItem = DiscHelperMenuStrip.Items.Add($"输出选中光盘文件列表");
+                    menuItem.Tag = discItem;
+                    menuItem.Click += LstDiscsItemOutputFileList_Click;
 
                     menuItem = DiscHelperMenuStrip.Items.Add("删除光盘");
                     menuItem.Tag = discItem;
@@ -1165,6 +1216,11 @@ namespace DiscHelper
 
             if (NoCut) ExtraStr += "NO CUT ";
             return $"[{ExtraStr}{((double)Size / 1024 / 1024).ToString("F2")} MB] {(DestName == null ? Name : DestName)}";
+        }
+
+        public string ToStringSimple()
+        {
+            return $"[{((double)Size / 1024 / 1024).ToString("F2")} MB ({Size})] {(DestName == null ? Name : DestName)}";
         }
     }
 

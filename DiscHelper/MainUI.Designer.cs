@@ -55,6 +55,7 @@
             this.CBoxFirstFit = new System.Windows.Forms.CheckBox();
             this.DiscHelperMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.CboxCutFile = new System.Windows.Forms.CheckBox();
+            this.CBoxGenFileList = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscCapacity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscRedundant)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscMaxRedundant)).BeginInit();
@@ -186,9 +187,9 @@
             // 
             this.BtnOutputFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnOutputFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnOutputFile.Location = new System.Drawing.Point(424, 392);
+            this.BtnOutputFile.Location = new System.Drawing.Point(453, 392);
             this.BtnOutputFile.Name = "BtnOutputFile";
-            this.BtnOutputFile.Size = new System.Drawing.Size(105, 29);
+            this.BtnOutputFile.Size = new System.Drawing.Size(76, 29);
             this.BtnOutputFile.TabIndex = 0;
             this.BtnOutputFile.Text = "开始输出";
             this.BtnOutputFile.UseVisualStyleBackColor = true;
@@ -227,7 +228,7 @@
             this.CBoxGenPar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxGenPar.AutoSize = true;
             this.CBoxGenPar.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxGenPar.Location = new System.Drawing.Point(267, 398);
+            this.CBoxGenPar.Location = new System.Drawing.Point(296, 397);
             this.CBoxGenPar.Name = "CBoxGenPar";
             this.CBoxGenPar.Size = new System.Drawing.Size(70, 21);
             this.CBoxGenPar.TabIndex = 5;
@@ -296,7 +297,7 @@
             this.CBoxMoveFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxMoveFile.AutoSize = true;
             this.CBoxMoveFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxMoveFile.Location = new System.Drawing.Point(342, 398);
+            this.CBoxMoveFile.Location = new System.Drawing.Point(372, 397);
             this.CBoxMoveFile.Name = "CBoxMoveFile";
             this.CBoxMoveFile.Size = new System.Drawing.Size(75, 21);
             this.CBoxMoveFile.TabIndex = 5;
@@ -310,7 +311,7 @@
             this.TxtOutputPath.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.TxtOutputPath.Location = new System.Drawing.Point(126, 395);
             this.TxtOutputPath.Name = "TxtOutputPath";
-            this.TxtOutputPath.Size = new System.Drawing.Size(135, 23);
+            this.TxtOutputPath.Size = new System.Drawing.Size(83, 23);
             this.TxtOutputPath.TabIndex = 7;
             this.TxtOutputPath.Text = "DISC";
             // 
@@ -385,6 +386,18 @@
             this.CboxCutFile.Text = "分割文件";
             this.CboxCutFile.UseVisualStyleBackColor = true;
             // 
+            // CBoxGenFileList
+            // 
+            this.CBoxGenFileList.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.CBoxGenFileList.AutoSize = true;
+            this.CBoxGenFileList.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.CBoxGenFileList.Location = new System.Drawing.Point(215, 397);
+            this.CBoxGenFileList.Name = "CBoxGenFileList";
+            this.CBoxGenFileList.Size = new System.Drawing.Size(75, 21);
+            this.CBoxGenFileList.TabIndex = 5;
+            this.CBoxGenFileList.Text = "生成列表";
+            this.CBoxGenFileList.UseVisualStyleBackColor = true;
+            // 
             // MainUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -398,6 +411,7 @@
             this.Controls.Add(this.CBoxMoveFile);
             this.Controls.Add(this.CboxCutFile);
             this.Controls.Add(this.CBoxFirstFit);
+            this.Controls.Add(this.CBoxGenFileList);
             this.Controls.Add(this.CBoxGenPar);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.label4);
@@ -454,6 +468,7 @@
         private System.Windows.Forms.CheckBox CBoxFirstFit;
         private System.Windows.Forms.ContextMenuStrip DiscHelperMenuStrip;
         private System.Windows.Forms.CheckBox CboxCutFile;
+        private System.Windows.Forms.CheckBox CBoxGenFileList;
     }
 }
 
