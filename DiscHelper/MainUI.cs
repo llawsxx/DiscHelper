@@ -52,6 +52,8 @@ namespace DiscHelper
             CBoxFirstFit.Checked = settings.isFirstFit;
             CboxCutFile.Checked = settings.isCutFile;
             CBoxGenFileList.Checked = settings.GenerateFileList;
+            NumBuffer.Maximum = int.MaxValue;
+            NumBuffer.Value = settings.ReadBuffer > int.MaxValue ? int.MaxValue : settings.ReadBuffer;
             AllSettings = settings;
         }
 
@@ -94,6 +96,7 @@ namespace DiscHelper
             AllSettings.isFirstFit = CBoxFirstFit.Checked;
             AllSettings.isCutFile = CboxCutFile.Checked;
             AllSettings.GenerateFileList = CBoxGenFileList.Checked;
+            AllSettings.ReadBuffer = (long)NumBuffer.Value;
             AllSettings.SaveSettings("Settings.xml");
             e.Cancel = false;
         }
@@ -156,6 +159,7 @@ namespace DiscHelper
             string OutputPath = Args["OutputPath"] as string;
             OutputPath = Path.GetFullPath(OutputPath);
             string ParExePath = Args["ParExePath"] as string;
+            long ReadSize = (long)Args["Buffer"];
             long TotalFileCount = 0;
             long FinishedFileCount = 0;
             ProcessStartInfo processStartInfo = null;
@@ -229,7 +233,7 @@ namespace DiscHelper
                         if (!isMove || MoveFailed)
                         {
                             bool cancelFlag = false;
-                            byte[] buffer = new byte[1024 * 1024]; // 1MB buffer
+                            byte[] buffer = new byte[ReadSize];
 
                             using (FileStream source = new FileStream(fileitem.Name, FileMode.Open, FileAccess.Read))
                             {
@@ -778,6 +782,7 @@ namespace DiscHelper
             Args["MaxRedundancySize"] = (long)NumDiscMaxRedundant.Value;
             Args["Disc"] = discItems;
             Args["GenPar"] = CBoxGenPar.Checked;
+            Args["Buffer"] = (long)NumBuffer.Value;
             DiscWorker.RunWorkerAsync(Args);
             BtnOutputFile.Text = "停止输出";
         }

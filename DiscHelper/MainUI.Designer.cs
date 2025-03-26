@@ -56,9 +56,12 @@
             this.DiscHelperMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.CboxCutFile = new System.Windows.Forms.CheckBox();
             this.CBoxGenFileList = new System.Windows.Forms.CheckBox();
+            this.NumBuffer = new System.Windows.Forms.NumericUpDown();
+            this.LblBufferSize = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscCapacity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscRedundant)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscMaxRedundant)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.NumBuffer)).BeginInit();
             this.SuspendLayout();
             // 
             // BtnAddFolder
@@ -175,7 +178,7 @@
             // 
             this.BtnTempFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.BtnTempFolder.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnTempFolder.Location = new System.Drawing.Point(14, 392);
+            this.BtnTempFolder.Location = new System.Drawing.Point(14, 391);
             this.BtnTempFolder.Name = "BtnTempFolder";
             this.BtnTempFolder.Size = new System.Drawing.Size(106, 29);
             this.BtnTempFolder.TabIndex = 0;
@@ -187,7 +190,7 @@
             // 
             this.BtnOutputFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnOutputFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnOutputFile.Location = new System.Drawing.Point(453, 392);
+            this.BtnOutputFile.Location = new System.Drawing.Point(453, 391);
             this.BtnOutputFile.Name = "BtnOutputFile";
             this.BtnOutputFile.Size = new System.Drawing.Size(76, 29);
             this.BtnOutputFile.TabIndex = 0;
@@ -228,7 +231,7 @@
             this.CBoxGenPar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxGenPar.AutoSize = true;
             this.CBoxGenPar.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxGenPar.Location = new System.Drawing.Point(296, 397);
+            this.CBoxGenPar.Location = new System.Drawing.Point(296, 396);
             this.CBoxGenPar.Name = "CBoxGenPar";
             this.CBoxGenPar.Size = new System.Drawing.Size(70, 21);
             this.CBoxGenPar.TabIndex = 5;
@@ -297,7 +300,7 @@
             this.CBoxMoveFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxMoveFile.AutoSize = true;
             this.CBoxMoveFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxMoveFile.Location = new System.Drawing.Point(372, 397);
+            this.CBoxMoveFile.Location = new System.Drawing.Point(372, 396);
             this.CBoxMoveFile.Name = "CBoxMoveFile";
             this.CBoxMoveFile.Size = new System.Drawing.Size(75, 21);
             this.CBoxMoveFile.TabIndex = 5;
@@ -309,7 +312,7 @@
             this.TxtOutputPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.TxtOutputPath.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.TxtOutputPath.Location = new System.Drawing.Point(126, 395);
+            this.TxtOutputPath.Location = new System.Drawing.Point(126, 394);
             this.TxtOutputPath.Name = "TxtOutputPath";
             this.TxtOutputPath.Size = new System.Drawing.Size(83, 23);
             this.TxtOutputPath.TabIndex = 7;
@@ -321,9 +324,9 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.TxtCMDOutput.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.TxtCMDOutput.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.TxtCMDOutput.Location = new System.Drawing.Point(15, 429);
+            this.TxtCMDOutput.Location = new System.Drawing.Point(15, 426);
             this.TxtCMDOutput.Name = "TxtCMDOutput";
-            this.TxtCMDOutput.Size = new System.Drawing.Size(517, 102);
+            this.TxtCMDOutput.Size = new System.Drawing.Size(517, 90);
             this.TxtCMDOutput.TabIndex = 8;
             this.TxtCMDOutput.Text = "";
             // 
@@ -391,18 +394,53 @@
             this.CBoxGenFileList.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxGenFileList.AutoSize = true;
             this.CBoxGenFileList.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxGenFileList.Location = new System.Drawing.Point(215, 397);
+            this.CBoxGenFileList.Location = new System.Drawing.Point(215, 396);
             this.CBoxGenFileList.Name = "CBoxGenFileList";
             this.CBoxGenFileList.Size = new System.Drawing.Size(75, 21);
             this.CBoxGenFileList.TabIndex = 5;
             this.CBoxGenFileList.Text = "生成列表";
             this.CBoxGenFileList.UseVisualStyleBackColor = true;
             // 
+            // NumBuffer
+            // 
+            this.NumBuffer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.NumBuffer.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.NumBuffer.Location = new System.Drawing.Point(77, 523);
+            this.NumBuffer.Maximum = new decimal(new int[] {
+            -1530494977,
+            232830,
+            0,
+            0});
+            this.NumBuffer.Minimum = new decimal(new int[] {
+            1048576,
+            0,
+            0,
+            0});
+            this.NumBuffer.Name = "NumBuffer";
+            this.NumBuffer.Size = new System.Drawing.Size(96, 23);
+            this.NumBuffer.TabIndex = 2;
+            this.NumBuffer.Value = new decimal(new int[] {
+            1048576,
+            0,
+            0,
+            0});
+            // 
+            // LblBufferSize
+            // 
+            this.LblBufferSize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.LblBufferSize.AutoSize = true;
+            this.LblBufferSize.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.LblBufferSize.Location = new System.Drawing.Point(15, 525);
+            this.LblBufferSize.Name = "LblBufferSize";
+            this.LblBufferSize.Size = new System.Drawing.Size(56, 17);
+            this.LblBufferSize.TabIndex = 3;
+            this.LblBufferSize.Text = "缓存大小";
+            // 
             // MainUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(544, 544);
+            this.ClientSize = new System.Drawing.Size(544, 557);
             this.Controls.Add(this.CBoxAllocatePolicy);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.TxtCMDOutput);
@@ -414,8 +452,10 @@
             this.Controls.Add(this.CBoxGenFileList);
             this.Controls.Add(this.CBoxGenPar);
             this.Controls.Add(this.label6);
+            this.Controls.Add(this.LblBufferSize);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
+            this.Controls.Add(this.NumBuffer);
             this.Controls.Add(this.NumDiscMaxRedundant);
             this.Controls.Add(this.NumDiscRedundant);
             this.Controls.Add(this.label1);
@@ -435,6 +475,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscCapacity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscRedundant)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscMaxRedundant)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.NumBuffer)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -469,6 +510,8 @@
         private System.Windows.Forms.ContextMenuStrip DiscHelperMenuStrip;
         private System.Windows.Forms.CheckBox CboxCutFile;
         private System.Windows.Forms.CheckBox CBoxGenFileList;
+        private System.Windows.Forms.NumericUpDown NumBuffer;
+        private System.Windows.Forms.Label LblBufferSize;
     }
 }
 

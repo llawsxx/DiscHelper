@@ -23,6 +23,7 @@ namespace DiscHelper
         public bool isFirstFit = false;
         public bool isCutFile = false;
         public bool GenerateFileList = false;
+        public long ReadBuffer = 1024 * 1024;
         public static Settings LoadSettings(string filename)
         {
             try
