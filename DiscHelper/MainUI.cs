@@ -54,6 +54,7 @@ namespace DiscHelper
             CBoxGenFileList.Checked = settings.GenerateFileList;
             NumBuffer.Maximum = int.MaxValue;
             NumBuffer.Value = settings.ReadBuffer > int.MaxValue ? int.MaxValue : settings.ReadBuffer;
+            TxtParArgument.Text = settings.ParArgument;
             AllSettings = settings;
         }
 
@@ -97,6 +98,7 @@ namespace DiscHelper
             AllSettings.isCutFile = CboxCutFile.Checked;
             AllSettings.GenerateFileList = CBoxGenFileList.Checked;
             AllSettings.ReadBuffer = (long)NumBuffer.Value;
+            AllSettings.ParArgument = TxtParArgument.Text;
             AllSettings.SaveSettings("Settings.xml");
             e.Cancel = false;
         }
@@ -159,6 +161,7 @@ namespace DiscHelper
             string OutputPath = Args["OutputPath"] as string;
             OutputPath = Path.GetFullPath(OutputPath);
             string ParExePath = Args["ParExePath"] as string;
+            string ParArgument = Args["ParArgument"] as string;
             long ReadSize = (long)Args["Buffer"];
             long TotalFileCount = 0;
             long FinishedFileCount = 0;
@@ -292,6 +295,8 @@ namespace DiscHelper
                     StringBuilder CMDArgs = new StringBuilder();
                     PasteArguments.AppendArgument(CMDArgs, "create");
                     PasteArguments.AppendArgument(CMDArgs, $"/rr{RedundancyPercent}");
+                    if(ParArgument.Length > 0)
+                        CMDArgs.Append(" " + ParArgument);
                     PasteArguments.AppendArgument(CMDArgs, Path.Combine(DiscPath, discItem.Name + ".par2"));
                     PasteArguments.AppendArgument(CMDArgs, Path.Combine(DiscPath, "*"));
                     processStartInfo.Arguments = CMDArgs.ToString();
@@ -783,6 +788,7 @@ namespace DiscHelper
             Args["Disc"] = discItems;
             Args["GenPar"] = CBoxGenPar.Checked;
             Args["Buffer"] = (long)NumBuffer.Value;
+            Args["ParArgument"] = TxtParArgument.Text;
             DiscWorker.RunWorkerAsync(Args);
             BtnOutputFile.Text = "停止输出";
         }

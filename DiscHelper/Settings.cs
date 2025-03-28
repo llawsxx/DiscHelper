@@ -24,6 +24,7 @@ namespace DiscHelper
         public bool isCutFile = false;
         public bool GenerateFileList = false;
         public long ReadBuffer = 1024 * 1024;
+        public string ParArgument = "/sn32768";
         public static Settings LoadSettings(string filename)
         {
             try

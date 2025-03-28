@@ -58,6 +58,8 @@
             this.CBoxGenFileList = new System.Windows.Forms.CheckBox();
             this.NumBuffer = new System.Windows.Forms.NumericUpDown();
             this.LblBufferSize = new System.Windows.Forms.Label();
+            this.LblParArgument = new System.Windows.Forms.Label();
+            this.TxtParArgument = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscCapacity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscRedundant)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscMaxRedundant)).BeginInit();
@@ -436,6 +438,27 @@
             this.LblBufferSize.TabIndex = 3;
             this.LblBufferSize.Text = "缓存大小";
             // 
+            // LblParArgument
+            // 
+            this.LblParArgument.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.LblParArgument.AutoSize = true;
+            this.LblParArgument.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.LblParArgument.Location = new System.Drawing.Point(194, 525);
+            this.LblParArgument.Name = "LblParArgument";
+            this.LblParArgument.Size = new System.Drawing.Size(51, 17);
+            this.LblParArgument.TabIndex = 3;
+            this.LblParArgument.Text = "Par参数";
+            // 
+            // TxtParArgument
+            // 
+            this.TxtParArgument.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TxtParArgument.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.TxtParArgument.Location = new System.Drawing.Point(251, 523);
+            this.TxtParArgument.Name = "TxtParArgument";
+            this.TxtParArgument.Size = new System.Drawing.Size(278, 23);
+            this.TxtParArgument.TabIndex = 7;
+            // 
             // MainUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -445,6 +468,7 @@
             this.Controls.Add(this.label7);
             this.Controls.Add(this.TxtCMDOutput);
             this.Controls.Add(this.TxtOutputPath);
+            this.Controls.Add(this.TxtParArgument);
             this.Controls.Add(this.TxtDiscNamePattern);
             this.Controls.Add(this.CBoxMoveFile);
             this.Controls.Add(this.CboxCutFile);
@@ -452,6 +476,7 @@
             this.Controls.Add(this.CBoxGenFileList);
             this.Controls.Add(this.CBoxGenPar);
             this.Controls.Add(this.label6);
+            this.Controls.Add(this.LblParArgument);
             this.Controls.Add(this.LblBufferSize);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
@@ -512,6 +537,8 @@
         private System.Windows.Forms.CheckBox CBoxGenFileList;
         private System.Windows.Forms.NumericUpDown NumBuffer;
         private System.Windows.Forms.Label LblBufferSize;
+        private System.Windows.Forms.Label LblParArgument;
+        private System.Windows.Forms.TextBox TxtParArgument;
     }
 }
 
