@@ -25,6 +25,7 @@ namespace DiscHelper
         public bool GenerateFileList = false;
         public long ReadBuffer = 1024 * 1024;
         public string ParArgument = "/sn32768";
+        public List<ComplexFileTemplate> ComplexFileTemplates = new List<ComplexFileTemplate>();
         public static Settings LoadSettings(string filename)
         {
             try

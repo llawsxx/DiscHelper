@@ -22,6 +22,7 @@ namespace DiscHelper
         DiscItem CurrentDiscItem = null;
         NameGenerator DiscNameGenerator = null;
         Settings AllSettings;
+        List<DiscItem> LastAllDiscItems = new List<DiscItem>();
         [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
         private static extern int StrCmpLogicalW(string psz1, string psz2);
 
@@ -56,6 +57,7 @@ namespace DiscHelper
             NumBuffer.Value = settings.ReadBuffer > int.MaxValue ? int.MaxValue : settings.ReadBuffer;
             TxtParArgument.Text = settings.ParArgument;
             AllSettings = settings;
+            updateTemplateList();
         }
 
         private string GetDiscName()
@@ -149,6 +151,64 @@ namespace DiscHelper
                 }
             }
         }
+        private List<Tuple<FileItem,DiscItem>> findAllSameFile(List<DiscItem> discItems,int FileId)
+        {
+            List<Tuple<FileItem, DiscItem>> resultFileItems = new List<Tuple<FileItem, DiscItem>>();
+            foreach (DiscItem discItem in discItems)
+            {
+                if (!discItem.IsAvailable) continue;
+                foreach (FileItem fileitem in discItem.FileItems)
+                {
+                    if(FileId == fileitem.FileId)
+                    {
+                        resultFileItems.Add(new Tuple<FileItem, DiscItem>(fileitem,discItem));
+                    }
+                }
+            }
+            resultFileItems = resultFileItems.OrderBy(e => { return e.Item1.StartPos; }).ToList();
+            return resultFileItems;
+        }
+
+
+        private void GenerateComplexFileItem_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripItem)sender;
+            var fileItems = item.Tag as List<FileItem>;
+
+            ComplexFileTemplate template = CBoxTemplate.SelectedItem as ComplexFileTemplate;
+            if (template == null)
+            {
+                MessageBox.Show("请先选择模版", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+
+            }
+            FileItem newFileItem = ComplexFileTemplate.GenerateComplexFileItem(fileItems, template.CommandLineExe, template.CommandLine,
+                template.FileInputReplaceStr, template.FileInputListSep, template.OutputFileSuffix, (double)template.InputOutputSizeRatio);
+            if (newFileItem == null)
+            {
+                MessageBox.Show("高级文件生成失败，请检查模版是否正确", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            int firstIndex = -1;
+            for (int i = 0; i < fileItems.Count; i++)
+            {
+                for (int j = 0; j < LstFiles.Items.Count; j++)
+                {
+                    if (fileItems[i] == LstFiles.Items[j]) {
+                        if(firstIndex == -1)
+                        {
+                            firstIndex = j;
+                        }
+                        LstFiles.Items.RemoveAt(j);
+                        break;
+                    }
+                }
+            }
+
+            if (firstIndex != -1) {
+                LstFiles.Items.Insert(firstIndex, newFileItem);
+            }
+        }
 
         private void DiscWorker_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -166,6 +226,7 @@ namespace DiscHelper
             long TotalFileCount = 0;
             long FinishedFileCount = 0;
             ProcessStartInfo processStartInfo = null;
+            ProcessStartInfo processStartInfoComplexFile = null;
 
             if (GenPar)
             {
@@ -206,84 +267,205 @@ namespace DiscHelper
 
                     if (!File.Exists(DestFileName))
                     {
-                        string DestFolder = Path.GetDirectoryName(DestFileName);
-                        if (DestFolder != null && DestFolder != String.Empty && !Directory.Exists(DestFolder))
+                        if (!string.IsNullOrEmpty(fileitem.CommandExe))
                         {
-                            Directory.CreateDirectory(DestFolder);
-                        }
-
-                        bool MoveFailed = false;
-                        if (isMove)
-                        {
-                            try
+                            if (fileitem.isFirstCommand)
                             {
-                                if (Path.GetPathRoot(fileitem.Name) == Path.GetPathRoot(DestFileName) && fileitem.StartPos == -1)
+                                List<Tuple<FileItem,DiscItem>> allSameFileItems = findAllSameFile(discItems, fileitem.FileId);
+
+                                string exeName = fileitem.CommandExe;
+                                string arguments = fileitem.Command;
+
+                                processStartInfoComplexFile = new ProcessStartInfo(exeName, arguments);
+                                processStartInfoComplexFile.UseShellExecute = false;
+                                processStartInfoComplexFile.ErrorDialog = false;
+                                processStartInfoComplexFile.CreateNoWindow = true;
+
+                                //  Specify redirection.
+                                processStartInfoComplexFile.RedirectStandardError = true;
+                                processStartInfoComplexFile.RedirectStandardInput = true;
+                                processStartInfoComplexFile.RedirectStandardOutput = true;
+                                var process = new Process();
+                                process.StartInfo = processStartInfoComplexFile;
+                                process.ErrorDataReceived += new DataReceivedEventHandler((sender2, e2) =>
                                 {
-                                    File.Move(fileitem.Name, DestFileName);
-                                    worker.ReportProgress((int)100, $"[{FinishedFileCount + 1}/{TotalFileCount}] 已移动 {DestFileName}");
+                                    // Prepend line numbers to each line of the output.
+                                    if (!String.IsNullOrEmpty(e2.Data))
+                                    {
+                                        TxtCMDOutput.BeginInvoke(new MethodInvoker(() =>
+                                        {
+                                            TxtCMDOutput.AppendText(e2.Data + Environment.NewLine);
+                                        }));
+                                    }
+                                });
+                                process.Start();
+                                process.BeginErrorReadLine();
+                                var stdin = process.StandardInput.BaseStream;
+                                var stdout = process.StandardOutput.BaseStream;
+                                byte[] buffer = new byte[ReadSize];
+
+                                for (int i = 0; i < allSameFileItems.Count; i++)
+                                {
+                                    FileItem fileitem2 = allSameFileItems[i].Item1;
+                                    DiscItem discItem2 = allSameFileItems[i].Item2;
+                                    string DiscPath2 = Path.Combine(OutputPath, discItem2.Name);
+                                    string DestFileName2 = Path.Combine(DiscPath2, fileitem2.DestName);
+                                    string DestFolder2 = Path.GetDirectoryName(DestFileName2);
+                                    if (DestFolder2 != null && DestFolder2 != String.Empty && !Directory.Exists(DestFolder2))
+                                    {
+                                        Directory.CreateDirectory(DestFolder2);
+                                    }
+
+                                    long fileLength = fileitem2.Size;
+                                    bool cancelFlag = false;
+                                    using (FileStream dest = new FileStream(DestFileName2, FileMode.CreateNew, FileAccess.Write))
+                                    {
+                                        long totalBytes = 0;
+                                        long RemainSize = fileitem2.Size;
+                                        bool isLast = i == allSameFileItems.Count - 1;
+                                        int currentBlockSize;
+                                        var watch = Stopwatch.StartNew();
+
+                                        while (true)
+                                        {
+                                            if (isLast)
+                                            {
+                                                currentBlockSize = stdout.Read(buffer, 0, buffer.Length);
+                                            }
+                                            else
+                                            {
+                                                currentBlockSize = stdout.Read(buffer, 0, (int)Math.Min(RemainSize, buffer.Length));
+                                            }
+                                            if (currentBlockSize <= 0) break;
+                                            totalBytes += currentBlockSize;
+                                            RemainSize -= currentBlockSize;
+                                            dest.Write(buffer, 0, currentBlockSize);
+                                            if (watch.ElapsedMilliseconds > 200)
+                                            {
+                                                if (worker.CancellationPending == true)
+                                                {
+                                                    try
+                                                    {
+                                                        process.Kill();
+                                                    }
+                                                    catch { }
+                                                    cancelFlag = true;
+                                                    break;
+                                                }
+                                                double percentage = (double)totalBytes * 100.0 / fileLength;
+                                                worker.ReportProgress((int)percentage, $"[{FinishedFileCount + 1}/{TotalFileCount}] 正在处理 [{((totalBytes / 1024) / 1024.0).ToString("F1")} / {((fileLength / 1024) / 1024.0).ToString("F1")} MB] {DestFileName2}");
+                                                watch.Restart();
+                                            }
+                                            if (RemainSize == 0 && !isLast) break;
+                                        }
+                                    }
+
+                                    if (cancelFlag)
+                                    {
+                                        e.Cancel = true;
+                                        File.Delete(DestFileName2);
+                                        return;
+                                    }
+
+                                    FinishedFileCount++;
                                 }
-                                else
+
+                            }
+                        }
+                        else
+                        {
+                            string DestFolder = Path.GetDirectoryName(DestFileName);
+                            if (DestFolder != null && DestFolder != String.Empty && !Directory.Exists(DestFolder))
+                            {
+                                Directory.CreateDirectory(DestFolder);
+                            }
+
+                            bool MoveFailed = false;
+                            if (isMove)
+                            {
+                                try
+                                {
+                                    if (Path.GetPathRoot(fileitem.Name) == Path.GetPathRoot(DestFileName) && fileitem.StartPos == -1)
+                                    {
+                                        File.Move(fileitem.Name, DestFileName);
+                                        worker.ReportProgress((int)100, $"[{FinishedFileCount + 1}/{TotalFileCount}] 已移动 {DestFileName}");
+                                    }
+                                    else
+                                    {
+                                        MoveFailed = true;
+                                    }
+                                }
+                                catch (Exception)
                                 {
                                     MoveFailed = true;
                                 }
                             }
-                            catch (Exception)
-                            {
-                                MoveFailed = true;
-                            }
-                        }
 
-                        if (!isMove || MoveFailed)
-                        {
-                            bool cancelFlag = false;
-                            byte[] buffer = new byte[ReadSize];
-
-                            using (FileStream source = new FileStream(fileitem.Name, FileMode.Open, FileAccess.Read))
+                            if (!isMove || MoveFailed)
                             {
-                                long fileLength = fileitem.Size;
-                                using (FileStream dest = new FileStream(DestFileName, FileMode.CreateNew, FileAccess.Write))
+                                bool cancelFlag = false;
+                                byte[] buffer = new byte[ReadSize];
+
+                                using (FileStream source = new FileStream(fileitem.Name, FileMode.Open, FileAccess.Read))
                                 {
-                                    long totalBytes = 0;
-                                    long RemainSize = fileitem.Size;
-                                    if (fileitem.StartPos != -1)
+                                    long fileLength = fileitem.Size;
+                                    using (FileStream dest = new FileStream(DestFileName, FileMode.CreateNew, FileAccess.Write))
                                     {
-                                        source.Seek(fileitem.StartPos, SeekOrigin.Begin);
-                                    }
-                                    while (true)
-                                    {
-                                        int currentBlockSize = source.Read(buffer, 0, (int)Math.Min(RemainSize, buffer.Length));
-                                        if (currentBlockSize <= 0) break;
-                                        totalBytes += currentBlockSize;
-                                        RemainSize -= currentBlockSize;
-                                        double percentage = (double)totalBytes * 100.0 / fileLength;
-                                        dest.Write(buffer, 0, currentBlockSize);
-                                        worker.ReportProgress((int)percentage, $"[{FinishedFileCount + 1}/{TotalFileCount}] 正在{(isMove && fileitem.StartPos == -1 ? "移动" : "复制")} [{((totalBytes / 1024) / 1024.0).ToString("F1")} / {((fileLength / 1024) / 1024.0).ToString("F1")} MB] {DestFileName}");
-                                        if (RemainSize == 0) break;
-                                        if (worker.CancellationPending == true)
+                                        long totalBytes = 0;
+                                        long RemainSize = fileitem.Size;
+                                        if (fileitem.StartPos != -1)
                                         {
-                                            cancelFlag = true;
-                                            break;
+                                            source.Seek(fileitem.StartPos, SeekOrigin.Begin);
+                                        }
+                                        while (true)
+                                        {
+                                            int currentBlockSize = source.Read(buffer, 0, (int)Math.Min(RemainSize, buffer.Length));
+                                            if (currentBlockSize <= 0) break;
+                                            totalBytes += currentBlockSize;
+                                            RemainSize -= currentBlockSize;
+                                            double percentage = (double)totalBytes * 100.0 / fileLength;
+                                            dest.Write(buffer, 0, currentBlockSize);
+                                            worker.ReportProgress((int)percentage, $"[{FinishedFileCount + 1}/{TotalFileCount}] 正在{(isMove && fileitem.StartPos == -1 ? "移动" : "复制")} [{((totalBytes / 1024) / 1024.0).ToString("F1")} / {((fileLength / 1024) / 1024.0).ToString("F1")} MB] {DestFileName}");
+                                            if (RemainSize == 0) break;
+                                            if (worker.CancellationPending == true)
+                                            {
+                                                cancelFlag = true;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
+
+                                if (cancelFlag)
+                                {
+                                    e.Cancel = true;
+                                    File.Delete(DestFileName);
+                                    return;
+                                }
+
+                                if (isMove && fileitem.StartPos == -1)
+                                {
+                                    File.Delete(fileitem.Name);
+                                }
                             }
 
-                            if (cancelFlag)
-                            {
-                                e.Cancel = true;
-                                File.Delete(DestFileName);
-                                return;
-                            }
-
-                            if (isMove && fileitem.StartPos == -1)
-                            {
-                                File.Delete(fileitem.Name);
-                            }
+                            FinishedFileCount++;
                         }
                     }
-                    FinishedFileCount++;
+                    else
+                    {
+                        FinishedFileCount++;
+                    }
                 }
 
+
+            }
+            //由于高级文件的存在，如果一个discItem有不是isFirstCommand的FileItem，就需要其它discItem生成完才会有这个isFirstCommand为false的FileItem的生成
+            //所以GenPar移到这里
+            foreach (DiscItem discItem in discItems)
+            {
+                if (!discItem.IsAvailable) continue;
+                string DiscPath = Path.Combine(OutputPath, discItem.Name);
                 if (discItem.IsGenPar && processStartInfo != null)
                 {
                     long RedundancySize = discItem.Capacity - discItem.Size;
@@ -295,7 +477,7 @@ namespace DiscHelper
                     StringBuilder CMDArgs = new StringBuilder();
                     PasteArguments.AppendArgument(CMDArgs, "create");
                     PasteArguments.AppendArgument(CMDArgs, $"/rr{RedundancyPercent}");
-                    if(ParArgument.Length > 0)
+                    if (ParArgument.Length > 0)
                         CMDArgs.Append(" " + ParArgument);
                     PasteArguments.AppendArgument(CMDArgs, Path.Combine(DiscPath, discItem.Name + ".par2"));
                     PasteArguments.AppendArgument(CMDArgs, Path.Combine(DiscPath, "*"));
@@ -303,7 +485,7 @@ namespace DiscHelper
                     string ReportText = $"{discItem.Name} 正在生成冗余 {processStartInfo.FileName} {CMDArgs}";
                     TxtCMDOutput.BeginInvoke(new MethodInvoker(() =>
                     {
-                        TxtCMDOutput.AppendText(ReportText+ Environment.NewLine);
+                        TxtCMDOutput.AppendText(ReportText + Environment.NewLine);
                     }));
                     worker.ReportProgress((int)-1, ReportText);
 
@@ -377,8 +559,10 @@ namespace DiscHelper
             long MinLastDiscOccupy = DiscCapacity;
             int MinDiscCount = int.MaxValue;
             int IterCount = 1;
+            int CurFileId = 0;
             foreach (FileItem item in LstFiles.Items)
             {
+                item.FileId = CurFileId++;
                 if (item.Size > DiscCapacity && (!CboxCutFile.Checked || item.NoCut))
                 {
                     NoOKFileSize += item.Size;
@@ -514,6 +698,10 @@ namespace DiscHelper
                             SplitFileItem.Size = Math.Min(DiscCapacity - DiscSize, RemainSize);
                             SplitFileItem.CreateTime = item.CreateTime;
                             SplitFileItem.Priority = item.Priority;
+                            SplitFileItem.Command = item.Command;
+                            SplitFileItem.CommandExe = item.CommandExe;
+                            SplitFileItem.isFirstCommand = StartPos == 0;
+                            SplitFileItem.FileId = item.FileId;
                             SplitFileItem.DestName = item.DestName + $".Segment_{Segment.ToString().PadLeft(PadWidth,'0')}";
                             Segment++;
                             StartPos += SplitFileItem.Size;
@@ -628,6 +816,13 @@ namespace DiscHelper
                 LstDiscs.Items.Add(item);
             }
 
+            LastAllDiscItems.Clear();
+            foreach (var item in DiscItems)
+            {
+                if (item.IsAvailable) {
+                    LastAllDiscItems.Add(item);
+                }
+            }
 
             TxtCMDOutput.AppendText($"总数 {FileItems.Count + NotOKFileItems.Count} 分配 {FileItems.Count} ({ToGigaByte(OKFileSize)}) 个 失败 {NotOKFileItems.Count} ({ToGigaByte(NoOKFileSize)}) 个" +
                 $" 空间浪费 {ToGigaByte(TotalDiscRemain)} 利用率 {((double)TotalDiscSize / (DiscCapacity * TotalDiscAvailable)).ToString("F4")} 光盘用量 {TotalDiscAvailable}{Environment.NewLine}");
@@ -660,18 +855,7 @@ namespace DiscHelper
             }
         }
 
-        string GetRelativePath(string filespec, string folder)
-        {
-            Uri pathUri = new Uri(filespec);
-            // Folders must end in a slash
-            if (!folder.EndsWith(Path.DirectorySeparatorChar.ToString()))
-            {
-                folder += Path.DirectorySeparatorChar;
-            }
-            Uri folderUri = new Uri(folder);
-            return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
-        }
-        private void LstFiles_AddItem(string Name)
+        public void LstFiles_AddItem(string Name)
         {
             if (Directory.Exists(Name))
             {
@@ -680,7 +864,7 @@ namespace DiscHelper
                 string[] files = Directory.GetFiles(Name, "*.*", SearchOption.AllDirectories);
                 foreach (string file in files)
                 {
-                    string RelativeName = GetRelativePath(file, ParentFolder);
+                    string RelativeName = Common.GetRelativePath(file, ParentFolder);
                     LstFiles.Items.Add(new FileItem(file, RelativeName));
                 }
             }
@@ -714,7 +898,7 @@ namespace DiscHelper
             }
         }
 
-        private void button4_Click(object sender, EventArgs e)
+        private void LstFiles_Clear(object sender, EventArgs e)
         {
             LstFiles.Items.Clear();
         }
@@ -731,7 +915,7 @@ namespace DiscHelper
             }
         }
 
-        private void BtnAddFiles_Click(object sender, EventArgs e)
+        public void BtnAddFiles_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Multiselect = true; //是否可以多选true=ok/false=no
@@ -819,7 +1003,10 @@ namespace DiscHelper
             {
                 OutputFileListTxt(discItems);
             }
-            OutputFileDoWork(discItems);
+            if (CheckDiscItems(discItems))
+            {
+                OutputFileDoWork(discItems);
+            }
         }
 
         private void RefreshDiscItem(DiscItem item)
@@ -943,6 +1130,27 @@ namespace DiscHelper
                     DiscHelperMenuStrip.Show(LstDiscFiles, e.Location);
                 }
             }
+        }
+
+        private void LstFilesItemEditComplex_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripItem)sender;
+            var fileItem = item.Tag as FileItem;
+            ComplexFile complexFileDialog =  new ComplexFile(AllSettings.ComplexFileTemplates, CBoxTemplate.SelectedIndex, fileItem);
+            if (complexFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                for (int i = 0; i < LstFiles.Items.Count; i++)
+                {
+                    if (LstFiles.Items[i] == fileItem)
+                    {
+                        LstFiles.Items.RemoveAt(i);
+                        LstFiles.Items.Insert(i, complexFileDialog.newFileItem);
+                        break;
+                    }
+                }
+            }
+
+            updateTemplateList();
         }
 
 
@@ -1074,6 +1282,22 @@ namespace DiscHelper
                         }
                     }
 
+                    if (!string.IsNullOrEmpty(fileItems[0].CommandExe))
+                    {
+                        menuItem = DiscHelperMenuStrip.Items.Add("编辑高级文件");
+                        menuItem.Tag = fileItems[0];
+                        menuItem.Click += LstFilesItemEditComplex_Click;
+                    }
+                    else
+                    {
+                        if (fileItems.All(item => item.Command == null))
+                        {
+                            menuItem = DiscHelperMenuStrip.Items.Add("转为高级文件");
+                            menuItem.Tag = fileItems;
+                            menuItem.Click += GenerateComplexFileItem_Click;
+                        }
+                    }
+
                     if (fileSize <= NumDiscCapacity.Value)
                     {
                         menuItem = DiscHelperMenuStrip.Items.Add("添加到新光盘");
@@ -1125,7 +1349,10 @@ namespace DiscHelper
             {
                 OutputFileListTxt(item.Tag as List<DiscItem>);
             }
-            OutputFileDoWork(item.Tag as List<DiscItem>);
+            if (CheckDiscItems(item.Tag as List<DiscItem>))
+            {
+                OutputFileDoWork(item.Tag as List<DiscItem>);
+            }
         }
 
         private void LstDiscsItemOutputFileList_Click(object sender, EventArgs e)
@@ -1191,10 +1418,63 @@ namespace DiscHelper
             }
         }
 
+        private void BtnAddComplexFile_Click(object sender, EventArgs e)
+        {
+            ComplexFile ComplexFileDialog = new ComplexFile(AllSettings.ComplexFileTemplates,CBoxTemplate.SelectedIndex);
+            if(ComplexFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                LstFiles.Items.Add(ComplexFileDialog.newFileItem);
+            }
+            updateTemplateList();
+        }
+
+        private bool CheckDiscItems(List<DiscItem> discItems)
+        {
+            StringBuilder checkMessage = new StringBuilder();
+            
+            for (int i = 0; i < discItems.Count; i++)
+            {
+                var discItem = discItems[i];
+                for (int j = 0; j < discItem.FileItems.Count; j++){
+                    var fileItem = discItem.FileItems[j];
+                    if(!string.IsNullOrEmpty(fileItem.CommandExe))
+                    {
+                        var result = findAllSameFile(discItems,fileItem.FileId);
+                        if(result.Count > 0)
+                        {
+                            var result2 = findAllSameFile(LastAllDiscItems, fileItem.FileId);
+                            if (result2.Count > result.Count)
+                                checkMessage.AppendLine($"【{discItem.Name}】中的【{fileItem.DestName}】依赖于【{string.Join(" / ", result2.Select(e => e.Item2.Name))}】");
+                        }
+                    }
+                }
+            }
+            if (checkMessage.Length > 0)
+            {
+                TxtCMDOutput.AppendText(checkMessage.ToString());
+                MessageBox.Show("部分文件依赖于其它文件，无法输出", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            return true; 
+        }
+        private void updateTemplateList()
+        {
+            int selectedIndex = CBoxTemplate.SelectedIndex;
+            CBoxTemplate.Items.Clear();
+            foreach (var template in AllSettings.ComplexFileTemplates)
+            {
+                CBoxTemplate.Items.Add(template);
+            }
+            if(CBoxTemplate.Items.Count > selectedIndex)
+            {
+                CBoxTemplate.SelectedIndex = selectedIndex;
+            }
+        }
+
 
     }
 
-    class FileItem
+    public class FileItem
     {
         public string Name;
         public string DestName;
@@ -1203,6 +1483,11 @@ namespace DiscHelper
         public long StartPos = -1;
         public bool NoCut = false;
         public int Priority = 0;
+        public string Command;
+        public string CommandExe;
+        public bool isFirstCommand;
+        //必要时使用ID
+        public int FileId;
         public FileItem(string Name, string DestName = null)
         {
             FileInfo file = new FileInfo(Name);
@@ -1222,17 +1507,19 @@ namespace DiscHelper
         public override string ToString()
         {
             string ExtraStr = "";
-
+            string CommandStr = string.IsNullOrEmpty(CommandExe) ? "" : $"[{CommandExe}]";
             if (Priority > 0) ExtraStr = $"{Priority}▲ ";
             else if(Priority < 0) ExtraStr = $"{-Priority}▼ ";
 
             if (NoCut) ExtraStr += "NO CUT ";
+            ExtraStr += CommandStr;
             return $"[{ExtraStr}{((double)Size / 1024 / 1024).ToString("F2")} MB] {(DestName == null ? Name : DestName)}";
         }
 
         public string ToStringSimple()
         {
-            return $"[{((double)Size / 1024 / 1024).ToString("F2")} MB ({Size})] {(DestName == null ? Name : DestName)}";
+            string CommandStr = string.IsNullOrEmpty(CommandExe) ? "" : $"[{CommandExe}]";
+            return $"[{((double)Size / 1024 / 1024).ToString("F2")} MB ({Size})]{CommandStr} {(DestName == null ? Name : DestName)}";
         }
     }
 
