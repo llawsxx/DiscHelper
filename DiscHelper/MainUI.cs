@@ -210,6 +210,41 @@ namespace DiscHelper
             }
         }
 
+        private void GenerateComplexFileItemSingle_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripItem)sender;
+            var fileItems = item.Tag as List<FileItem>;
+
+            ComplexFileTemplate template = CBoxTemplate.SelectedItem as ComplexFileTemplate;
+            if (template == null)
+            {
+                MessageBox.Show("请先选择模版", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+
+            }
+            foreach (FileItem fileItem in fileItems)
+            {
+                var oneFileItem = new List<FileItem>();
+                oneFileItem.Add(fileItem);
+                FileItem newFileItem = ComplexFileTemplate.GenerateComplexFileItem(oneFileItem, template.CommandLineExe, template.CommandLine,
+                    template.FileInputReplaceStr, template.FileInputListSep, template.OutputFileSuffix, (double)template.InputOutputSizeRatio);
+                if (newFileItem == null)
+                {
+                    MessageBox.Show("高级文件生成失败，请检查模版是否正确", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                for (int i = 0; i < LstFiles.Items.Count; i++)
+                {
+                    if (fileItem == LstFiles.Items[i])
+                    {
+                        LstFiles.Items.RemoveAt(i);
+                        LstFiles.Items.Insert(i, newFileItem);
+                        break;
+                    }
+                }
+            }
+        }
+
         private void DiscWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
@@ -1292,6 +1327,10 @@ namespace DiscHelper
                     {
                         if (fileItems.All(item => item.Command == null))
                         {
+                            menuItem = DiscHelperMenuStrip.Items.Add("逐个转为高级文件");
+                            menuItem.Tag = fileItems;
+                            menuItem.Click += GenerateComplexFileItemSingle_Click;
+
                             menuItem = DiscHelperMenuStrip.Items.Add("转为高级文件");
                             menuItem.Tag = fileItems;
                             menuItem.Click += GenerateComplexFileItem_Click;
