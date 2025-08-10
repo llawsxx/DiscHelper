@@ -30,7 +30,7 @@ namespace DiscHelper
         {
             ComplexFileTemplates = complexFileTemplates;
             TemplateSelectedIndex = templateSelectedIndex;
-            updateTemplateList();
+            updateTemplateList(-1);
         }
 
         public ComplexFile(List<ComplexFileTemplate> complexFileTemplates, int templateSelectedIndex,FileItem fileItem)
@@ -127,9 +127,10 @@ namespace DiscHelper
 
 
 
-        private void updateTemplateList()
+        private void updateTemplateList(int selectedIndex)
         {
-            int selectedIndex = CBoxTemplate.SelectedIndex;
+            if(selectedIndex == -1)
+                selectedIndex = CBoxTemplate.SelectedIndex;
             if(TemplateSelectedIndex != -1)
             {
                 selectedIndex = TemplateSelectedIndex;
@@ -175,8 +176,14 @@ namespace DiscHelper
             newTemplate.InputOutputSizeRatio = NumInputOuputRatio.Value;
             newTemplate.CommandLineExe = TxtCommandExe.Text;
             if (!isSameName)
+            {
                 ComplexFileTemplates.Add(newTemplate);
-            updateTemplateList();
+                updateTemplateList(ComplexFileTemplates.Count - 1);
+            }
+            else
+            {
+                updateTemplateList(-1);
+            }
         }
 
         private void CBoxTemplate_SelectedIndexChanged(object sender, EventArgs e)
@@ -201,7 +208,7 @@ namespace DiscHelper
             {
                 ComplexFileTemplates.RemoveAt(templateIndex);
             }
-            updateTemplateList();
+            updateTemplateList(-1);
         }
 
         private void BtnConfirm_Click(object sender, EventArgs e)

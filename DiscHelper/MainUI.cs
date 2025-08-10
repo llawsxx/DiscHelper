@@ -338,7 +338,8 @@ namespace DiscHelper
                                 var stdin = process.StandardInput.BaseStream;
                                 var stdout = process.StandardOutput.BaseStream;
                                 byte[] buffer = new byte[ReadSize];
-
+                                long predictedSize = allSameFileItems.Select(item=>item.Item1.Size).Sum();
+                                long actualSize = 0;
                                 for (int i = 0; i < allSameFileItems.Count; i++)
                                 {
                                     FileItem fileitem2 = allSameFileItems[i].Item1;
@@ -373,6 +374,7 @@ namespace DiscHelper
                                             }
                                             if (currentBlockSize <= 0) break;
                                             totalBytes += currentBlockSize;
+                                            actualSize += currentBlockSize;
                                             RemainSize -= currentBlockSize;
                                             dest.Write(buffer, 0, currentBlockSize);
                                             if (watch.ElapsedMilliseconds > 200)
@@ -404,7 +406,10 @@ namespace DiscHelper
 
                                     FinishedFileCount++;
                                 }
-
+                                TxtCMDOutput.BeginInvoke(new MethodInvoker(() =>
+                                {
+                                    TxtCMDOutput.AppendText($"【{allSameFileItems[0].Item1.Name}】预计大小：{predictedSize}({ToGigaByte(predictedSize)}) 实际大小：{actualSize}({ToGigaByte(actualSize)}) 实际大小/预计大小：{(double)actualSize / predictedSize}" + Environment.NewLine);
+                                }));
                             }
                         }
                         else
@@ -1327,10 +1332,12 @@ namespace DiscHelper
                     {
                         if (fileItems.All(item => item.Command == null))
                         {
-                            menuItem = DiscHelperMenuStrip.Items.Add("逐个转为高级文件");
-                            menuItem.Tag = fileItems;
-                            menuItem.Click += GenerateComplexFileItemSingle_Click;
-
+                            if (fileItems.Count > 1)
+                            {
+                                menuItem = DiscHelperMenuStrip.Items.Add("逐个转为高级文件");
+                                menuItem.Tag = fileItems;
+                                menuItem.Click += GenerateComplexFileItemSingle_Click;
+                            }
                             menuItem = DiscHelperMenuStrip.Items.Add("转为高级文件");
                             menuItem.Tag = fileItems;
                             menuItem.Click += GenerateComplexFileItem_Click;
