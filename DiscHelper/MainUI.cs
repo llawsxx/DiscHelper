@@ -888,10 +888,10 @@ namespace DiscHelper
 
             if (FileDuplicatePrompt.Length > 0)
             {
-                string PromptText = "以下分配的光盘有重复文件，请检查，否则文件输出将缺少文件" +
+                string PromptText = "以下分配的光盘有重复文件，请检查" +
                 Environment.NewLine + FileDuplicatePrompt.ToString();
                 TxtCMDOutput.AppendText(PromptText);
-                MessageBox.Show(PromptText, "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("分配的光盘有重复文件，请检查", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -1017,6 +1017,37 @@ namespace DiscHelper
             BtnOutputFile.Text = "停止输出";
         }
 
+        private bool CheckDuplicateFileItems(List<DiscItem> discItems)
+        {
+            StringBuilder FileDuplicatePrompt = new StringBuilder();
+            foreach (var item in discItems)
+            {
+                bool PrintDiscName = true;
+                var DuplicateFileItems = item.FileItems.GroupBy(x => x.DestName).Where(g => g.Count() > 1);
+                foreach (var item2 in DuplicateFileItems)
+                {
+                    if (PrintDiscName)
+                    {
+                        FileDuplicatePrompt.AppendLine($"[{item.Name}]");
+                        PrintDiscName = false;
+                    }
+                    foreach (var item3 in item2)
+                    {
+                        FileDuplicatePrompt.AppendLine(item3.DestName);
+                        break;
+                    }
+                }
+            }
+            if (FileDuplicatePrompt.Length > 0)
+            {
+                TxtCMDOutput.AppendText("以下分配的光盘有重复文件，请检查" + Environment.NewLine);
+                TxtCMDOutput.AppendText(FileDuplicatePrompt.ToString());
+                MessageBox.Show("分配的光盘有重复文件，请检查", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            return true;
+        }
+
         private void BtnOutputFile_Click(object sender, EventArgs e)
         {
             if (DiscWorker.IsBusy)
@@ -1043,7 +1074,7 @@ namespace DiscHelper
             {
                 OutputFileListTxt(discItems);
             }
-            if (CheckDiscItems(discItems))
+            if (CheckDiscItems(discItems) && CheckDuplicateFileItems(discItems))
             {
                 OutputFileDoWork(discItems);
             }
@@ -1395,7 +1426,7 @@ namespace DiscHelper
             {
                 OutputFileListTxt(item.Tag as List<DiscItem>);
             }
-            if (CheckDiscItems(item.Tag as List<DiscItem>))
+            if (CheckDiscItems(item.Tag as List<DiscItem>) && CheckDuplicateFileItems(item.Tag as List<DiscItem>))
             {
                 OutputFileDoWork(item.Tag as List<DiscItem>);
             }
