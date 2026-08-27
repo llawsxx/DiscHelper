@@ -142,6 +142,7 @@ namespace DiscHelper
                         node.IsMapping ? FileAccess.Read : FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete);
                 fileNode = node;
                 fileDesc = handle;
+                normalizedName = CanonicalPath(node);
                 FillInfo(node, out fileInfo);
                 TrackHandle(handle);
                 return STATUS_SUCCESS;
@@ -215,6 +216,7 @@ namespace DiscHelper
             };
             fileNode = node;
             fileDesc = handle;
+            normalizedName = CanonicalPath(node);
             FillInfo(node, out fileInfo);
             TrackHandle(handle);
             return STATUS_SUCCESS;
@@ -512,6 +514,19 @@ namespace DiscHelper
                 node = next;
             }
             return node;
+        }
+
+        private static string CanonicalPath(Node node)
+        {
+            if (node == null || node.Parent == null) return "\\";
+            var parts = new Stack<string>();
+            Node current = node;
+            while (current != null && current.Parent != null)
+            {
+                parts.Push(current.Name);
+                current = current.Parent;
+            }
+            return "\\" + string.Join("\\", parts.ToArray());
         }
 
         private void DeleteNode(Node node)
