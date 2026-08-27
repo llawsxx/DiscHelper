@@ -1697,7 +1697,11 @@ namespace DiscHelper
             }
             var discs = requestedDiscs;
             if (discs == null)
+            {
                 discs = LstDiscs.SelectedItems.Cast<DiscItem>().ToList();
+                if (discs.Count == 0)
+                    discs = LstDiscs.Items.Cast<DiscItem>().ToList();
+            }
             if (discs.Any(disc => disc.FileItems.Any(item => !string.IsNullOrEmpty(item.CommandExe))))
             {
                 MessageBox.Show("包含高级文件的光盘不支持虚拟磁盘", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1717,7 +1721,7 @@ namespace DiscHelper
                     : Path.Combine(settingsDirectory, configuredPath));
                 if (discs.Count == 0 && !Directory.Exists(dataPath))
                 {
-                    MessageBox.Show("请先在光盘列表中选择要挂载的光盘", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("请先在光盘列表中添加要挂载的光盘", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
                 Directory.CreateDirectory(dataPath);
