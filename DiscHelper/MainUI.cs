@@ -1569,6 +1569,95 @@ namespace DiscHelper
             }
         }
 
+        private void LstDiscsRenameItem_Click(object sender, EventArgs e)
+        {
+            var menuItem = (ToolStripItem)sender;
+            var discItem = menuItem.Tag as DiscItem;
+            if (discItem == null)
+            {
+                return;
+            }
+
+            string newName;
+            if (!TryGetDiscName(discItem.Name, out newName))
+            {
+                return;
+            }
+
+            discItem.Name = newName;
+            RefreshDiscItem(discItem);
+            if (CurrentDiscItem == discItem)
+            {
+                LstDiscs.SelectedItem = discItem;
+            }
+        }
+
+        private bool TryGetDiscName(string currentName, out string newName)
+        {
+            newName = null;
+            using (Form dialog = new Form())
+            using (Label label = new Label())
+            using (TextBox textBox = new TextBox())
+            using (Button okButton = new Button())
+            using (Button cancelButton = new Button())
+            {
+                dialog.Text = "重命名光盘";
+                dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dialog.StartPosition = FormStartPosition.CenterParent;
+                dialog.MinimizeBox = false;
+                dialog.MaximizeBox = false;
+                dialog.ShowInTaskbar = false;
+                dialog.ClientSize = new System.Drawing.Size(360, 112);
+
+                label.AutoSize = true;
+                label.Text = "光盘名称：";
+                label.Location = new System.Drawing.Point(12, 17);
+
+                textBox.Text = currentName;
+                textBox.Location = new System.Drawing.Point(82, 14);
+                textBox.Size = new System.Drawing.Size(265, 23);
+
+                okButton.Text = "确定";
+                okButton.DialogResult = DialogResult.OK;
+                okButton.Location = new System.Drawing.Point(191, 61);
+                okButton.Size = new System.Drawing.Size(75, 29);
+
+                cancelButton.Text = "取消";
+                cancelButton.DialogResult = DialogResult.Cancel;
+                cancelButton.Location = new System.Drawing.Point(272, 61);
+                cancelButton.Size = new System.Drawing.Size(75, 29);
+
+                dialog.Controls.Add(label);
+                dialog.Controls.Add(textBox);
+                dialog.Controls.Add(okButton);
+                dialog.Controls.Add(cancelButton);
+                dialog.AcceptButton = okButton;
+                dialog.CancelButton = cancelButton;
+
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    return false;
+                }
+
+                newName = textBox.Text.Trim();
+                if (string.IsNullOrEmpty(newName))
+                {
+                    MessageBox.Show("光盘名称不能为空", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    newName = null;
+                    return false;
+                }
+
+                if (newName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                {
+                    MessageBox.Show("光盘名称包含文件名不允许的字符", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    newName = null;
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
 
         private void LstDiscs_MouseDown(object sender, MouseEventArgs e)
         {
@@ -1588,6 +1677,12 @@ namespace DiscHelper
 
                     DiscHelperMenuStrip.Items.Add($"总大小 {((double)Size / 1024 / 1024).ToString("F2")} MB 剩余空间 {((double)Remain / 1024 / 1024).ToString("F2")} MB [共选中{discItem.Count}个]").Enabled = false;
                     ToolStripItem menuItem;
+                    if (!DiscWorker.IsBusy && discItem.Count == 1)
+                    {
+                        menuItem = DiscHelperMenuStrip.Items.Add("重命名光盘");
+                        menuItem.Tag = discItem[0];
+                        menuItem.Click += LstDiscsRenameItem_Click;
+                    }
                     if (!DiscWorker.IsBusy)
                     {
                         menuItem = DiscHelperMenuStrip.Items.Add($"输出选中光盘");
