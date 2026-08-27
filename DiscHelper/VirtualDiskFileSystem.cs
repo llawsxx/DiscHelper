@@ -101,7 +101,8 @@ namespace DiscHelper
             host.UnicodeOnDisk = true;
             host.PersistentAcls = false;
             host.PostCleanupWhenModifiedOnly = true;
-            host.PassQueryDirectoryPattern = true;
+            // Let WinFsp apply directory wildcard filtering before callbacks.
+            host.PassQueryDirectoryPattern = false;
             host.FlushAndPurgeOnCleanup = true;
             return STATUS_SUCCESS;
         }
@@ -229,7 +230,13 @@ namespace DiscHelper
             int count = (int)Math.Min((ulong)length, (ulong)node.Length - offset);
             byte[] bytes = new byte[count];
             handle.Stream.Seek(node.IsMapping ? node.SourceOffset + (long)offset : (long)offset, SeekOrigin.Begin);
-            int read = handle.Stream.Read(bytes, 0, count);
+            int read = 0;
+            while (read < count)
+            {
+                int current = handle.Stream.Read(bytes, read, count - read);
+                if (current <= 0) break;
+                read += current;
+            }
             Marshal.Copy(bytes, 0, buffer, read);
             bytesTransferred = (uint)read;
             return STATUS_SUCCESS;
@@ -251,6 +258,31 @@ namespace DiscHelper
             node.Length = handle.Stream.Length;
             node.LastWriteUtc = DateTime.UtcNow;
             bytesTransferred = length;
+            FillInfo(node, out fileInfo);
+            return STATUS_SUCCESS;
+        }
+
+        public override int Flush(object fileNode, object fileDesc, out FileInfo fileInfo)
+        {
+            Node node = (Node)fileNode;
+            Handle handle = fileDesc as Handle;
+            if (handle != null && handle.Stream != null)
+            {
+                try
+                {
+                    handle.Stream.Flush();
+                }
+                catch (IOException)
+                {
+                    fileInfo = new FileInfo();
+                    return STATUS_ACCESS_DENIED;
+                }
+            }
+            if (node == null)
+            {
+                fileInfo = new FileInfo();
+                return STATUS_SUCCESS;
+            }
             FillInfo(node, out fileInfo);
             return STATUS_SUCCESS;
         }
@@ -325,11 +357,48 @@ namespace DiscHelper
             ulong lastAccessTime, ulong lastWriteTime, ulong changeTime, out FileInfo fileInfo)
         {
             Node node = (Node)fileNode;
-            if (!node.IsMapping && lastWriteTime != 0)
+            if (node == null)
             {
-                node.LastWriteUtc = DateTime.FromFileTimeUtc((long)lastWriteTime);
-                if (node.IsDirectory) Directory.SetLastWriteTimeUtc(node.BackendPath, node.LastWriteUtc);
-                else File.SetLastWriteTimeUtc(node.BackendPath, node.LastWriteUtc);
+                fileInfo = new FileInfo();
+                return STATUS_OBJECT_NAME_NOT_FOUND;
+            }
+            if (!node.IsMapping)
+            {
+                try
+                {
+                    if (fileAttributes != uint.MaxValue)
+                    {
+                        File.SetAttributes(node.BackendPath, (FileAttributes)fileAttributes);
+                    }
+                    if (creationTime != 0)
+                    {
+                        DateTime value = DateTime.FromFileTimeUtc((long)creationTime);
+                        if (node.IsDirectory) Directory.SetCreationTimeUtc(node.BackendPath, value);
+                        else File.SetCreationTimeUtc(node.BackendPath, value);
+                    }
+                    if (lastAccessTime != 0)
+                    {
+                        DateTime value = DateTime.FromFileTimeUtc((long)lastAccessTime);
+                        if (node.IsDirectory) Directory.SetLastAccessTimeUtc(node.BackendPath, value);
+                        else File.SetLastAccessTimeUtc(node.BackendPath, value);
+                    }
+                    if (lastWriteTime != 0)
+                    {
+                        node.LastWriteUtc = DateTime.FromFileTimeUtc((long)lastWriteTime);
+                        if (node.IsDirectory) Directory.SetLastWriteTimeUtc(node.BackendPath, node.LastWriteUtc);
+                        else File.SetLastWriteTimeUtc(node.BackendPath, node.LastWriteUtc);
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    fileInfo = new FileInfo();
+                    return STATUS_ACCESS_DENIED;
+                }
+                catch (IOException)
+                {
+                    fileInfo = new FileInfo();
+                    return STATUS_ACCESS_DENIED;
+                }
             }
             FillInfo(node, out fileInfo);
             return STATUS_SUCCESS;
