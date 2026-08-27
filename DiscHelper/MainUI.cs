@@ -144,7 +144,7 @@ namespace DiscHelper
 
         private void OutputFileListTxt(List<DiscItem> discItems)
         {
-            string OutputPath = TxtOutputPath.Text;
+            string OutputPath = NormalizeOutputPath(TxtOutputPath.Text);
             Directory.CreateDirectory(OutputPath);
             foreach (var discItem in discItems)
             {
@@ -267,7 +267,7 @@ namespace DiscHelper
             bool GenPar = (bool)Args["GenPar"];
             long MaxRedundancySize = (long)Args["MaxRedundancySize"];
             string OutputPath = Args["OutputPath"] as string;
-            OutputPath = Path.GetFullPath(OutputPath);
+            OutputPath = Path.GetFullPath(NormalizeOutputPath(OutputPath));
             string ParExePath = Args["ParExePath"] as string;
             string ParArgument = Args["ParArgument"] as string;
             long ReadSize = (long)Args["Buffer"];
@@ -586,6 +586,14 @@ namespace DiscHelper
         private string ToGigaByte(long bytes)
         {
             return ((double)bytes / 1024 / 1024 / 1024).ToString("F2") + " GB";
+        }
+
+        private static string NormalizeOutputPath(string path)
+        {
+            path = (path ?? string.Empty).Trim();
+            if (path.Length == 2 && char.IsLetter(path[0]) && path[1] == ':')
+                return path + Path.DirectorySeparatorChar;
+            return path;
         }
 
         private void BinPacking()

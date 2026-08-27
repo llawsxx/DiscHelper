@@ -152,6 +152,39 @@ namespace DiscHelper
             }
         }
 
+        public override int Overwrite(object fileNode, object fileDesc, uint fileAttributes,
+            bool replaceFileAttributes, ulong allocationSize, out FileInfo fileInfo)
+        {
+            Node node = (Node)fileNode;
+            Handle handle = fileDesc as Handle;
+            fileInfo = new FileInfo();
+            if (node == null || node.IsDirectory || node.IsMapping || handle == null || handle.Stream == null)
+                return STATUS_ACCESS_DENIED;
+
+            try
+            {
+                handle.Stream.SetLength((long)allocationSize);
+                handle.Stream.Position = 0;
+                node.Length = (long)allocationSize;
+                node.LastWriteUtc = DateTime.UtcNow;
+                if (replaceFileAttributes)
+                {
+                    File.SetAttributes(node.BackendPath, (FileAttributes)fileAttributes);
+                }
+                File.SetLastWriteTimeUtc(node.BackendPath, node.LastWriteUtc);
+                FillInfo(node, out fileInfo);
+                return STATUS_SUCCESS;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return STATUS_ACCESS_DENIED;
+            }
+            catch (IOException)
+            {
+                return STATUS_ACCESS_DENIED;
+            }
+        }
+
         public override int Create(string fileName, uint createOptions, uint grantedAccess, uint fileAttributes,
             byte[] securityDescriptor, ulong allocationSize, out object fileNode, out object fileDesc,
             out FileInfo fileInfo, out string normalizedName)
