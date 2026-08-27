@@ -23,6 +23,7 @@ namespace DiscHelper
         NameGenerator DiscNameGenerator = null;
         Settings AllSettings;
         List<DiscItem> LastAllDiscItems = new List<DiscItem>();
+        private VirtualDiskFileSystem _virtualDisk;
         [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
         private static extern int StrCmpLogicalW(string psz1, string psz2);
 
@@ -57,7 +58,10 @@ namespace DiscHelper
             NumBuffer.Maximum = int.MaxValue;
             NumBuffer.Value = settings.ReadBuffer > int.MaxValue ? int.MaxValue : settings.ReadBuffer;
             TxtParArgument.Text = settings.ParArgument;
+            TxtVirtualDiskDataPath.Text = string.IsNullOrWhiteSpace(settings.VirtualDiskDataPath) ? "data" : settings.VirtualDiskDataPath;
             AllSettings = settings;
+            RestoreWorkspace(settings);
+            UpdateVirtualDiskButton();
             updateTemplateList();
         }
 
@@ -102,6 +106,13 @@ namespace DiscHelper
             AllSettings.GenerateFileList = CBoxGenFileList.Checked;
             AllSettings.ReadBuffer = (long)NumBuffer.Value;
             AllSettings.ParArgument = TxtParArgument.Text;
+            AllSettings.VirtualDiskDataPath = TxtVirtualDiskDataPath.Text.Trim();
+            SaveWorkspace();
+            if (!TryUnmountVirtualDisk(true))
+            {
+                e.Cancel = true;
+                return;
+            }
             AllSettings.SaveSettings("Settings.xml");
             e.Cancel = false;
         }
@@ -109,6 +120,7 @@ namespace DiscHelper
         private void DiscWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             BtnOutputFile.Text = "开始输出";
+            UpdateVirtualDiskButton();
             //if (e.Cancelled)
             //{
             //    Text = "DiscHelper";
@@ -913,6 +925,11 @@ namespace DiscHelper
             {
                 LstFiles.Items.Add(new FileItem(Name));
             }
+
+            if (_virtualDisk != null)
+            {
+                TryUnmountVirtualDisk(true);
+            }
             UpdateFileMoveButtons();
         }
 
@@ -1132,6 +1149,7 @@ namespace DiscHelper
             Args["ParArgument"] = TxtParArgument.Text;
             DiscWorker.RunWorkerAsync(Args);
             BtnOutputFile.Text = "停止输出";
+            UpdateVirtualDiskButton();
         }
 
         private bool CheckDuplicateFileItems(List<DiscItem> discItems)
@@ -1658,6 +1676,157 @@ namespace DiscHelper
             }
         }
 
+        private void LstDiscsMountVirtualDisk_Click(object sender, EventArgs e)
+        {
+            var menuItem = (ToolStripItem)sender;
+            ToggleVirtualDisk(menuItem.Tag as List<DiscItem>);
+        }
+
+        private void BtnVirtualDisk_Click(object sender, EventArgs e)
+        {
+            ToggleVirtualDisk(null);
+        }
+
+        private void ToggleVirtualDisk(List<DiscItem> requestedDiscs)
+        {
+            if (DiscWorker.IsBusy) return;
+            if (_virtualDisk != null)
+            {
+                TryUnmountVirtualDisk(true);
+                return;
+            }
+            var discs = requestedDiscs;
+            if (discs == null)
+                discs = LstDiscs.SelectedItems.Cast<DiscItem>().ToList();
+            if (discs.Any(disc => disc.FileItems.Any(item => !string.IsNullOrEmpty(item.CommandExe))))
+            {
+                MessageBox.Show("包含高级文件的光盘不支持虚拟磁盘", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            try
+            {
+                string configuredPath = TxtVirtualDiskDataPath.Text.Trim();
+                if (string.IsNullOrEmpty(configuredPath))
+                {
+                    MessageBox.Show("虚拟磁盘数据目录不能为空", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                string settingsDirectory = Path.GetDirectoryName(Path.GetFullPath("Settings.xml"));
+                string dataPath = Path.GetFullPath(Path.IsPathRooted(configuredPath)
+                    ? configuredPath
+                    : Path.Combine(settingsDirectory, configuredPath));
+                if (discs.Count == 0 && !Directory.Exists(dataPath))
+                {
+                    MessageBox.Show("请先在光盘列表中选择要挂载的光盘", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                Directory.CreateDirectory(dataPath);
+                _virtualDisk = new VirtualDiskFileSystem(discs, dataPath);
+                _virtualDisk.ActiveFileHandleCountChanged += VirtualDisk_ActiveFileHandleCountChanged;
+                AllSettings.VirtualDiskDataPath = configuredPath;
+                if (!_virtualDisk.Mount(null))
+                {
+                    int status = _virtualDisk.LastMountStatus;
+                    _virtualDisk.ActiveFileHandleCountChanged -= VirtualDisk_ActiveFileHandleCountChanged;
+                    _virtualDisk = null;
+                    UpdateVirtualDiskButton();
+                    MessageBox.Show(string.Format("虚拟磁盘挂载失败：0x{0:X8} ({1})", status, status), "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    UpdateVirtualDiskButton();
+                    MessageBox.Show("虚拟磁盘已挂载到 " + _virtualDisk.MountPoint + "。映射文件为只读，关闭软件时会自动卸载。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (_virtualDisk != null)
+                {
+                    _virtualDisk.ActiveFileHandleCountChanged -= VirtualDisk_ActiveFileHandleCountChanged;
+                    _virtualDisk.Unmount();
+                }
+                _virtualDisk = null;
+                UpdateVirtualDiskButton();
+                Exception detail = ex;
+                while (detail.InnerException != null) detail = detail.InnerException;
+                MessageBox.Show("虚拟磁盘挂载失败：" + detail.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private bool TryUnmountVirtualDisk(bool confirmActiveHandles)
+        {
+            if (_virtualDisk == null) return true;
+
+            int activeHandles = _virtualDisk.ActiveFileHandleCount;
+            if (confirmActiveHandles && activeHandles > 0)
+            {
+                string message = string.Format("虚拟磁盘仍有 {0} 个活动文件句柄。强制卸载会中断正在进行的读取或写入，是否继续？", activeHandles);
+                if (MessageBox.Show(message, "确认卸载", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                    return false;
+            }
+
+            _virtualDisk.ActiveFileHandleCountChanged -= VirtualDisk_ActiveFileHandleCountChanged;
+            _virtualDisk.Unmount();
+            _virtualDisk = null;
+            UpdateVirtualDiskButton();
+            return true;
+        }
+
+        private void VirtualDisk_ActiveFileHandleCountChanged(object sender, EventArgs e)
+        {
+            if (IsDisposed || !IsHandleCreated) return;
+            if (InvokeRequired)
+            {
+                try
+                {
+                    BeginInvoke(new EventHandler(VirtualDisk_ActiveFileHandleCountChanged), sender, e);
+                }
+                catch (InvalidOperationException) { }
+                return;
+            }
+            if (ReferenceEquals(sender, _virtualDisk)) UpdateVirtualDiskButton();
+        }
+
+        private void UpdateVirtualDiskButton()
+        {
+            BtnVirtualDisk.Text = _virtualDisk == null ? "挂载虚拟磁盘" : "卸载虚拟磁盘";
+            BtnVirtualDisk.Enabled = !DiscWorker.IsBusy;
+            TxtVirtualDiskDataPath.Enabled = _virtualDisk == null && !DiscWorker.IsBusy;
+            LblVirtualDiskHandles.Visible = _virtualDisk != null;
+            LblVirtualDiskHandles.Text = "虚拟磁盘句柄：" + (_virtualDisk == null ? 0 : _virtualDisk.ActiveFileHandleCount);
+        }
+
+        private void RestoreWorkspace(Settings settings)
+        {
+            foreach (PersistedFileItem item in settings.SavedFiles ?? new List<PersistedFileItem>())
+                LstFiles.Items.Add(item.ToFileItem());
+
+            foreach (PersistedDiscItem savedDisc in settings.SavedDiscs ?? new List<PersistedDiscItem>())
+            {
+                DiscItem disc = new DiscItem(savedDisc.Name, savedDisc.Capacity) { IsAvailable = savedDisc.IsAvailable, IsGenPar = savedDisc.IsGenPar };
+                foreach (PersistedFileItem item in savedDisc.FileItems ?? new List<PersistedFileItem>()) disc.AddFileItem(item.ToFileItem());
+                LstDiscs.Items.Add(disc);
+            }
+            LastAllDiscItems = LstDiscs.Items.Cast<DiscItem>().Where(disc => disc.IsAvailable).ToList();
+            if (LstDiscs.Items.Count > 0)
+                LstDiscs.SelectedIndex = settings.SavedSelectedDiscIndex >= 0 && settings.SavedSelectedDiscIndex < LstDiscs.Items.Count ? settings.SavedSelectedDiscIndex : 0;
+            UpdateFileMoveButtons();
+        }
+
+        private void SaveWorkspace()
+        {
+            AllSettings.SavedFiles = LstFiles.Items.Cast<FileItem>().Select(PersistedFileItem.FromFileItem).ToList();
+            AllSettings.SavedSelectedDiscIndex = LstDiscs.SelectedIndex;
+            AllSettings.SavedDiscs = LstDiscs.Items.Cast<DiscItem>().Select(disc => new PersistedDiscItem
+            {
+                Name = disc.Name,
+                Capacity = disc.Capacity,
+                IsAvailable = disc.IsAvailable,
+                IsGenPar = disc.IsGenPar,
+                FileItems = disc.FileItems.Select(PersistedFileItem.FromFileItem).ToList()
+            }).ToList();
+        }
+
 
         private void LstDiscs_MouseDown(object sender, MouseEventArgs e)
         {
@@ -1677,6 +1846,12 @@ namespace DiscHelper
 
                     DiscHelperMenuStrip.Items.Add($"总大小 {((double)Size / 1024 / 1024).ToString("F2")} MB 剩余空间 {((double)Remain / 1024 / 1024).ToString("F2")} MB [共选中{discItem.Count}个]").Enabled = false;
                     ToolStripItem menuItem;
+                    if (!DiscWorker.IsBusy && _virtualDisk == null && discItem.All(disc => disc.IsAvailable))
+                    {
+                        menuItem = DiscHelperMenuStrip.Items.Add("挂载只读虚拟磁盘");
+                        menuItem.Tag = discItem;
+                        menuItem.Click += LstDiscsMountVirtualDisk_Click;
+                    }
                     if (!DiscWorker.IsBusy && discItem.Count == 1)
                     {
                         menuItem = DiscHelperMenuStrip.Items.Add("重命名光盘");

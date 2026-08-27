@@ -25,6 +25,10 @@ namespace DiscHelper
         public bool GenerateFileList = false;
         public long ReadBuffer = 1024 * 1024;
         public string ParArgument = "/sn32768";
+        public string VirtualDiskDataPath = "data";
+        public List<PersistedFileItem> SavedFiles = new List<PersistedFileItem>();
+        public List<PersistedDiscItem> SavedDiscs = new List<PersistedDiscItem>();
+        public int SavedSelectedDiscIndex = -1;
         public List<ComplexFileTemplate> ComplexFileTemplates = new List<ComplexFileTemplate>();
         public static Settings LoadSettings(string filename)
         {
@@ -61,5 +65,39 @@ namespace DiscHelper
             return false;
         }
 
+    }
+
+    public class PersistedFileItem
+    {
+        public string Name;
+        public string DestName;
+        public long Size;
+        public DateTime CreateTime;
+        public long StartPos;
+        public bool NoCut;
+        public int Priority;
+        public string Command;
+        public string CommandExe;
+        public bool IsFirstCommand;
+        public int FileId;
+
+        public static PersistedFileItem FromFileItem(FileItem item)
+        {
+            return new PersistedFileItem { Name = item.Name, DestName = item.DestName, Size = item.Size, CreateTime = item.CreateTime, StartPos = item.StartPos, NoCut = item.NoCut, Priority = item.Priority, Command = item.Command, CommandExe = item.CommandExe, IsFirstCommand = item.isFirstCommand, FileId = item.FileId };
+        }
+
+        public FileItem ToFileItem()
+        {
+            return new FileItem { Name = Name, DestName = DestName, Size = Size, CreateTime = CreateTime, StartPos = StartPos, NoCut = NoCut, Priority = Priority, Command = Command, CommandExe = CommandExe, isFirstCommand = IsFirstCommand, FileId = FileId };
+        }
+    }
+
+    public class PersistedDiscItem
+    {
+        public string Name;
+        public long Capacity;
+        public bool IsAvailable;
+        public bool IsGenPar;
+        public List<PersistedFileItem> FileItems = new List<PersistedFileItem>();
     }
 }

@@ -33,26 +33,30 @@
             this.BtnAddFiles = new System.Windows.Forms.Button();
             this.LstFiles = new System.Windows.Forms.ListBox();
             this.PnlFiles = new System.Windows.Forms.Panel();
-            this.SplitFiles = new System.Windows.Forms.SplitContainer();
             this.BtnMoveFilesFirst = new System.Windows.Forms.Button();
             this.BtnMoveFilesLast = new System.Windows.Forms.Button();
             this.BtnMoveFilesUp = new System.Windows.Forms.Button();
             this.BtnMoveFilesDown = new System.Windows.Forms.Button();
+            this.SplitFiles = new System.Windows.Forms.SplitContainer();
+            this.LstDiscs = new System.Windows.Forms.ListBox();
+            this.LstDiscFiles = new System.Windows.Forms.ListBox();
+            this.BtnClearLstFiles = new System.Windows.Forms.Button();
+            this.label6 = new System.Windows.Forms.Label();
+            this.TxtDiscNamePattern = new System.Windows.Forms.TextBox();
+            this.LblVirtualDiskDataPath = new System.Windows.Forms.Label();
+            this.TxtVirtualDiskDataPath = new System.Windows.Forms.TextBox();
+            this.BtnVirtualDisk = new System.Windows.Forms.Button();
+            this.LblVirtualDiskHandles = new System.Windows.Forms.Label();
             this.NumDiscCapacity = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
             this.BtnAllocateDisc = new System.Windows.Forms.Button();
-            this.LstDiscs = new System.Windows.Forms.ListBox();
-            this.LstDiscFiles = new System.Windows.Forms.ListBox();
             this.BtnTempFolder = new System.Windows.Forms.Button();
             this.BtnOutputFile = new System.Windows.Forms.Button();
             this.NumDiscRedundant = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
             this.CBoxGenPar = new System.Windows.Forms.CheckBox();
-            this.BtnClearLstFiles = new System.Windows.Forms.Button();
             this.NumDiscMaxRedundant = new System.Windows.Forms.NumericUpDown();
             this.label4 = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
-            this.TxtDiscNamePattern = new System.Windows.Forms.TextBox();
             this.CBoxMoveFile = new System.Windows.Forms.CheckBox();
             this.TxtOutputPath = new System.Windows.Forms.TextBox();
             this.TxtCMDOutput = new System.Windows.Forms.RichTextBox();
@@ -69,11 +73,15 @@
             this.BtnAddComplexFile = new System.Windows.Forms.Button();
             this.LblComplexFileTemplate = new System.Windows.Forms.Label();
             this.CBoxTemplate = new System.Windows.Forms.ComboBox();
+            this.PnlFiles.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.SplitFiles)).BeginInit();
+            this.SplitFiles.Panel1.SuspendLayout();
+            this.SplitFiles.Panel2.SuspendLayout();
+            this.SplitFiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscCapacity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscRedundant)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscMaxRedundant)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumBuffer)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.SplitFiles)).BeginInit();
             this.SuspendLayout();
             // 
             // BtnAddFolder
@@ -101,7 +109,9 @@
             // LstFiles
             // 
             this.LstFiles.AllowDrop = true;
-            this.LstFiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.LstFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.LstFiles.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.LstFiles.FormattingEnabled = true;
             this.LstFiles.ItemHeight = 17;
@@ -110,21 +120,26 @@
             this.LstFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
             this.LstFiles.Size = new System.Drawing.Size(414, 123);
             this.LstFiles.TabIndex = 1;
+            this.LstFiles.SelectedIndexChanged += new System.EventHandler(this.LstFiles_SelectedIndexChanged);
             this.LstFiles.DragDrop += new System.Windows.Forms.DragEventHandler(this.LstFiles_DragDrop);
             this.LstFiles.DragEnter += new System.Windows.Forms.DragEventHandler(this.LstFiles_DragEnter);
             this.LstFiles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LstFiles_MouseDown);
-            this.LstFiles.SelectedIndexChanged += new System.EventHandler(this.LstFiles_SelectedIndexChanged);
-            //
+            // 
             // PnlFiles
-            //
+            // 
+            this.PnlFiles.Controls.Add(this.LstFiles);
+            this.PnlFiles.Controls.Add(this.BtnMoveFilesFirst);
+            this.PnlFiles.Controls.Add(this.BtnMoveFilesLast);
+            this.PnlFiles.Controls.Add(this.BtnMoveFilesUp);
+            this.PnlFiles.Controls.Add(this.BtnMoveFilesDown);
             this.PnlFiles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.PnlFiles.Location = new System.Drawing.Point(0, 0);
             this.PnlFiles.Name = "PnlFiles";
             this.PnlFiles.Size = new System.Drawing.Size(517, 123);
             this.PnlFiles.TabIndex = 20;
-            //
+            // 
             // BtnMoveFilesFirst
-            //
+            // 
             this.BtnMoveFilesFirst.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnMoveFilesFirst.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.BtnMoveFilesFirst.Location = new System.Drawing.Point(420, 0);
@@ -134,9 +149,9 @@
             this.BtnMoveFilesFirst.Text = "移动到最前";
             this.BtnMoveFilesFirst.UseVisualStyleBackColor = true;
             this.BtnMoveFilesFirst.Click += new System.EventHandler(this.BtnMoveFilesFirst_Click);
-            //
+            // 
             // BtnMoveFilesLast
-            //
+            // 
             this.BtnMoveFilesLast.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnMoveFilesLast.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.BtnMoveFilesLast.Location = new System.Drawing.Point(420, 31);
@@ -146,9 +161,9 @@
             this.BtnMoveFilesLast.Text = "移动到最后";
             this.BtnMoveFilesLast.UseVisualStyleBackColor = true;
             this.BtnMoveFilesLast.Click += new System.EventHandler(this.BtnMoveFilesLast_Click);
-            //
+            // 
             // BtnMoveFilesUp
-            //
+            // 
             this.BtnMoveFilesUp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnMoveFilesUp.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.BtnMoveFilesUp.Location = new System.Drawing.Point(420, 62);
@@ -158,9 +173,9 @@
             this.BtnMoveFilesUp.Text = "向上移";
             this.BtnMoveFilesUp.UseVisualStyleBackColor = true;
             this.BtnMoveFilesUp.Click += new System.EventHandler(this.BtnMoveFilesUp_Click);
-            //
+            // 
             // BtnMoveFilesDown
-            //
+            // 
             this.BtnMoveFilesDown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnMoveFilesDown.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.BtnMoveFilesDown.Location = new System.Drawing.Point(420, 94);
@@ -170,29 +185,140 @@
             this.BtnMoveFilesDown.Text = "向下移";
             this.BtnMoveFilesDown.UseVisualStyleBackColor = true;
             this.BtnMoveFilesDown.Click += new System.EventHandler(this.BtnMoveFilesDown_Click);
-            this.PnlFiles.Controls.Add(this.LstFiles);
-            this.PnlFiles.Controls.Add(this.BtnMoveFilesFirst);
-            this.PnlFiles.Controls.Add(this.BtnMoveFilesLast);
-            this.PnlFiles.Controls.Add(this.BtnMoveFilesUp);
-            this.PnlFiles.Controls.Add(this.BtnMoveFilesDown);
-            //
+            // 
             // SplitFiles
-            //
-            this.SplitFiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            // 
+            this.SplitFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.SplitFiles.Location = new System.Drawing.Point(12, 116);
             this.SplitFiles.Name = "SplitFiles";
             this.SplitFiles.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            this.SplitFiles.Panel1MinSize = 123;
-            this.SplitFiles.Panel2MinSize = 177;
-            this.SplitFiles.Size = new System.Drawing.Size(517, 304);
-            this.SplitFiles.SplitterDistance = 123;
-            this.SplitFiles.TabIndex = 25;
+            // 
+            // SplitFiles.Panel1
+            // 
             this.SplitFiles.Panel1.Controls.Add(this.PnlFiles);
+            this.SplitFiles.Panel1MinSize = 123;
+            // 
+            // SplitFiles.Panel2
+            // 
             this.SplitFiles.Panel2.Controls.Add(this.LstDiscs);
             this.SplitFiles.Panel2.Controls.Add(this.LstDiscFiles);
             this.SplitFiles.Panel2.Controls.Add(this.BtnClearLstFiles);
             this.SplitFiles.Panel2.Controls.Add(this.label6);
             this.SplitFiles.Panel2.Controls.Add(this.TxtDiscNamePattern);
+            this.SplitFiles.Panel2.Controls.Add(this.LblVirtualDiskDataPath);
+            this.SplitFiles.Panel2.Controls.Add(this.TxtVirtualDiskDataPath);
+            this.SplitFiles.Panel2.Controls.Add(this.BtnVirtualDisk);
+            this.SplitFiles.Panel2MinSize = 177;
+            this.SplitFiles.Size = new System.Drawing.Size(517, 304);
+            this.SplitFiles.SplitterDistance = 123;
+            this.SplitFiles.TabIndex = 25;
+            // 
+            // LstDiscs
+            // 
+            this.LstDiscs.AllowDrop = true;
+            this.LstDiscs.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.LstDiscs.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.LstDiscs.FormattingEnabled = true;
+            this.LstDiscs.ItemHeight = 17;
+            this.LstDiscs.Location = new System.Drawing.Point(2, 37);
+            this.LstDiscs.Name = "LstDiscs";
+            this.LstDiscs.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
+            this.LstDiscs.Size = new System.Drawing.Size(247, 140);
+            this.LstDiscs.TabIndex = 1;
+            this.LstDiscs.SelectedIndexChanged += new System.EventHandler(this.LstDiscs_SelectedIndexChanged);
+            this.LstDiscs.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LstDiscs_MouseDown);
+            // 
+            // LstDiscFiles
+            // 
+            this.LstDiscFiles.AllowDrop = true;
+            this.LstDiscFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.LstDiscFiles.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.LstDiscFiles.FormattingEnabled = true;
+            this.LstDiscFiles.ItemHeight = 17;
+            this.LstDiscFiles.Location = new System.Drawing.Point(255, 37);
+            this.LstDiscFiles.Name = "LstDiscFiles";
+            this.LstDiscFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
+            this.LstDiscFiles.Size = new System.Drawing.Size(263, 140);
+            this.LstDiscFiles.TabIndex = 1;
+            this.LstDiscFiles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LstDiscFiles_MouseDown);
+            // 
+            // BtnClearLstFiles
+            // 
+            this.BtnClearLstFiles.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.BtnClearLstFiles.Location = new System.Drawing.Point(0, 2);
+            this.BtnClearLstFiles.Name = "BtnClearLstFiles";
+            this.BtnClearLstFiles.Size = new System.Drawing.Size(47, 29);
+            this.BtnClearLstFiles.TabIndex = 0;
+            this.BtnClearLstFiles.Text = "清空";
+            this.BtnClearLstFiles.UseVisualStyleBackColor = true;
+            this.BtnClearLstFiles.Click += new System.EventHandler(this.LstFiles_Clear);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label6.Location = new System.Drawing.Point(52, 8);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(56, 17);
+            this.label6.TabIndex = 3;
+            this.label6.Text = "名称模版";
+            // 
+            // TxtDiscNamePattern
+            // 
+            this.TxtDiscNamePattern.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.TxtDiscNamePattern.Location = new System.Drawing.Point(110, 5);
+            this.TxtDiscNamePattern.Name = "TxtDiscNamePattern";
+            this.TxtDiscNamePattern.Size = new System.Drawing.Size(139, 23);
+            this.TxtDiscNamePattern.TabIndex = 7;
+            // 
+            // LblVirtualDiskDataPath
+            // 
+            this.LblVirtualDiskDataPath.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.LblVirtualDiskDataPath.Location = new System.Drawing.Point(242, 3);
+            this.LblVirtualDiskDataPath.Name = "LblVirtualDiskDataPath";
+            this.LblVirtualDiskDataPath.Size = new System.Drawing.Size(68, 29);
+            this.LblVirtualDiskDataPath.TabIndex = 26;
+            this.LblVirtualDiskDataPath.Text = "数据目录";
+            this.LblVirtualDiskDataPath.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // TxtVirtualDiskDataPath
+            // 
+            this.TxtVirtualDiskDataPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TxtVirtualDiskDataPath.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.TxtVirtualDiskDataPath.Location = new System.Drawing.Point(311, 6);
+            this.TxtVirtualDiskDataPath.Name = "TxtVirtualDiskDataPath";
+            this.TxtVirtualDiskDataPath.Size = new System.Drawing.Size(107, 23);
+            this.TxtVirtualDiskDataPath.TabIndex = 27;
+            this.TxtVirtualDiskDataPath.Text = "data";
+            // 
+            // BtnVirtualDisk
+            // 
+            this.BtnVirtualDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.BtnVirtualDisk.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.BtnVirtualDisk.Location = new System.Drawing.Point(424, 3);
+            this.BtnVirtualDisk.Name = "BtnVirtualDisk";
+            this.BtnVirtualDisk.Size = new System.Drawing.Size(94, 29);
+            this.BtnVirtualDisk.TabIndex = 29;
+            this.BtnVirtualDisk.Text = "挂载虚拟磁盘";
+            this.BtnVirtualDisk.UseVisualStyleBackColor = true;
+            this.BtnVirtualDisk.Click += new System.EventHandler(this.BtnVirtualDisk_Click);
+            // 
+            // LblVirtualDiskHandles
+            // 
+            this.LblVirtualDiskHandles.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.LblVirtualDiskHandles.Location = new System.Drawing.Point(381, 48);
+            this.LblVirtualDiskHandles.Name = "LblVirtualDiskHandles";
+            this.LblVirtualDiskHandles.Size = new System.Drawing.Size(148, 29);
+            this.LblVirtualDiskHandles.TabIndex = 28;
+            this.LblVirtualDiskHandles.Text = "虚拟磁盘句柄：0";
+            this.LblVirtualDiskHandles.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.LblVirtualDiskHandles.Visible = false;
             // 
             // NumDiscCapacity
             // 
@@ -232,35 +358,6 @@
             this.BtnAllocateDisc.Text = "分配";
             this.BtnAllocateDisc.UseVisualStyleBackColor = true;
             this.BtnAllocateDisc.Click += new System.EventHandler(this.BtnAllocateDisc_Click);
-            // 
-            // LstDiscs
-            // 
-            this.LstDiscs.AllowDrop = true;
-            this.LstDiscs.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left)));
-            this.LstDiscs.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.LstDiscs.FormattingEnabled = true;
-            this.LstDiscs.ItemHeight = 17;
-            this.LstDiscs.Location = new System.Drawing.Point(2, 37);
-            this.LstDiscs.Name = "LstDiscs";
-            this.LstDiscs.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.LstDiscs.Size = new System.Drawing.Size(247, 140);
-            this.LstDiscs.TabIndex = 1;
-            this.LstDiscs.SelectedIndexChanged += new System.EventHandler(this.LstDiscs_SelectedIndexChanged);
-            this.LstDiscs.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LstDiscs_MouseDown);
-            // 
-            // LstDiscFiles
-            // 
-            this.LstDiscFiles.AllowDrop = true;
-            this.LstDiscFiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.LstDiscFiles.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.LstDiscFiles.FormattingEnabled = true;
-            this.LstDiscFiles.ItemHeight = 17;
-            this.LstDiscFiles.Location = new System.Drawing.Point(255, 3);
-            this.LstDiscFiles.Name = "LstDiscFiles";
-            this.LstDiscFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.LstDiscFiles.Size = new System.Drawing.Size(263, 174);
-            this.LstDiscFiles.TabIndex = 1;
-            this.LstDiscFiles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LstDiscFiles_MouseDown);
             // 
             // BtnTempFolder
             // 
@@ -326,18 +423,6 @@
             this.CBoxGenPar.Text = "生成Par";
             this.CBoxGenPar.UseVisualStyleBackColor = true;
             // 
-            // BtnClearLstFiles
-            // 
-            this.BtnClearLstFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
-            this.BtnClearLstFiles.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnClearLstFiles.Location = new System.Drawing.Point(0, 2);
-            this.BtnClearLstFiles.Name = "BtnClearLstFiles";
-            this.BtnClearLstFiles.Size = new System.Drawing.Size(47, 29);
-            this.BtnClearLstFiles.TabIndex = 0;
-            this.BtnClearLstFiles.Text = "清空";
-            this.BtnClearLstFiles.UseVisualStyleBackColor = true;
-            this.BtnClearLstFiles.Click += new System.EventHandler(this.LstFiles_Clear);
-            // 
             // NumDiscMaxRedundant
             // 
             this.NumDiscMaxRedundant.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
@@ -365,26 +450,6 @@
             this.label4.Size = new System.Drawing.Size(56, 17);
             this.label4.TabIndex = 3;
             this.label4.Text = "最大冗余";
-            // 
-            // label6
-            // 
-            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label6.Location = new System.Drawing.Point(52, 8);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(56, 17);
-            this.label6.TabIndex = 3;
-            this.label6.Text = "名称模版";
-            // 
-            // TxtDiscNamePattern
-            // 
-            this.TxtDiscNamePattern.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
-            this.TxtDiscNamePattern.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.TxtDiscNamePattern.Location = new System.Drawing.Point(110, 5);
-            this.TxtDiscNamePattern.Name = "TxtDiscNamePattern";
-            this.TxtDiscNamePattern.Size = new System.Drawing.Size(139, 23);
-            this.TxtDiscNamePattern.TabIndex = 7;
             // 
             // CBoxMoveFile
             // 
@@ -589,6 +654,7 @@
             this.Controls.Add(this.BtnAddComplexFile);
             this.Controls.Add(this.CBoxAllocatePolicy);
             this.Controls.Add(this.label7);
+            this.Controls.Add(this.LblVirtualDiskHandles);
             this.Controls.Add(this.TxtCMDOutput);
             this.Controls.Add(this.TxtOutputPath);
             this.Controls.Add(this.TxtParArgument);
@@ -615,11 +681,16 @@
             this.Name = "MainUI";
             this.ShowIcon = false;
             this.Text = "DiscHelper";
+            this.PnlFiles.ResumeLayout(false);
+            this.SplitFiles.Panel1.ResumeLayout(false);
+            this.SplitFiles.Panel2.ResumeLayout(false);
+            this.SplitFiles.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.SplitFiles)).EndInit();
+            this.SplitFiles.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscCapacity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscRedundant)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumDiscMaxRedundant)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumBuffer)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.SplitFiles)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -651,6 +722,10 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox TxtDiscNamePattern;
+        private System.Windows.Forms.Label LblVirtualDiskDataPath;
+        private System.Windows.Forms.Label LblVirtualDiskHandles;
+        private System.Windows.Forms.TextBox TxtVirtualDiskDataPath;
+        private System.Windows.Forms.Button BtnVirtualDisk;
         private System.Windows.Forms.CheckBox CBoxMoveFile;
         private System.Windows.Forms.TextBox TxtOutputPath;
         private System.Windows.Forms.RichTextBox TxtCMDOutput;
