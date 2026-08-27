@@ -241,7 +241,7 @@ namespace DiscHelper
             }
             Marshal.Copy(bytes, 0, buffer, read);
             bytesTransferred = (uint)read;
-            return STATUS_SUCCESS;
+            return read == count ? STATUS_SUCCESS : STATUS_END_OF_FILE;
         }
 
         public override int Write(object fileNode, object fileDesc, IntPtr buffer, ulong offset, uint length,
