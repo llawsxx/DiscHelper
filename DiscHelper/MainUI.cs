@@ -29,6 +29,7 @@ namespace DiscHelper
         public MainUI()
         {
             InitializeComponent();
+            UpdateFileMoveButtons();
             this.FormClosing += DiskHelper_FormClosing;
 
             NumDiscCapacity.Maximum = long.MaxValue;
@@ -912,6 +913,7 @@ namespace DiscHelper
             {
                 LstFiles.Items.Add(new FileItem(Name));
             }
+            UpdateFileMoveButtons();
         }
 
         private void LstFiles_DragEnter(object sender, DragEventArgs e)
@@ -941,6 +943,121 @@ namespace DiscHelper
         private void LstFiles_Clear(object sender, EventArgs e)
         {
             LstFiles.Items.Clear();
+            UpdateFileMoveButtons();
+        }
+
+        private void LstFiles_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateFileMoveButtons();
+        }
+
+        private void UpdateFileMoveButtons()
+        {
+            bool hasSelection = LstFiles.SelectedIndices.Count > 0;
+            int firstSelectedIndex = hasSelection ? LstFiles.SelectedIndices.Cast<int>().Min() : -1;
+            int lastSelectedIndex = hasSelection ? LstFiles.SelectedIndices.Cast<int>().Max() : -1;
+
+            BtnMoveFilesFirst.Enabled = hasSelection && firstSelectedIndex > 0;
+            BtnMoveFilesLast.Enabled = hasSelection && lastSelectedIndex < LstFiles.Items.Count - 1;
+            BtnMoveFilesUp.Enabled = hasSelection && firstSelectedIndex > 0;
+            BtnMoveFilesDown.Enabled = hasSelection && lastSelectedIndex < LstFiles.Items.Count - 1;
+        }
+
+        private enum FileMoveOperation
+        {
+            First,
+            Last,
+            Up,
+            Down
+        }
+
+        private void MoveSelectedFiles(FileMoveOperation operation)
+        {
+            List<int> selectedIndices = LstFiles.SelectedIndices.Cast<int>().ToList();
+            if (selectedIndices.Count == 0)
+            {
+                return;
+            }
+
+            List<FileItem> items = LstFiles.Items.Cast<FileItem>().ToList();
+            HashSet<FileItem> selectedItems = new HashSet<FileItem>(selectedIndices.Select(index => items[index]));
+            List<FileItem> reorderedItems;
+
+            if (operation == FileMoveOperation.First)
+            {
+                reorderedItems = items.Where(item => selectedItems.Contains(item))
+                    .Concat(items.Where(item => !selectedItems.Contains(item))).ToList();
+            }
+            else if (operation == FileMoveOperation.Last)
+            {
+                reorderedItems = items.Where(item => !selectedItems.Contains(item))
+                    .Concat(items.Where(item => selectedItems.Contains(item))).ToList();
+            }
+            else if (operation == FileMoveOperation.Up)
+            {
+                reorderedItems = items.ToList();
+                for (int i = 1; i < reorderedItems.Count; i++)
+                {
+                    if (selectedItems.Contains(reorderedItems[i]) && !selectedItems.Contains(reorderedItems[i - 1]))
+                    {
+                        FileItem movedItem = reorderedItems[i];
+                        reorderedItems[i] = reorderedItems[i - 1];
+                        reorderedItems[i - 1] = movedItem;
+                    }
+                }
+            }
+            else
+            {
+                reorderedItems = items.ToList();
+                for (int i = reorderedItems.Count - 2; i >= 0; i--)
+                {
+                    if (selectedItems.Contains(reorderedItems[i]) && !selectedItems.Contains(reorderedItems[i + 1]))
+                    {
+                        FileItem movedItem = reorderedItems[i];
+                        reorderedItems[i] = reorderedItems[i + 1];
+                        reorderedItems[i + 1] = movedItem;
+                    }
+                }
+            }
+
+            LstFiles.BeginUpdate();
+            try
+            {
+                LstFiles.Items.Clear();
+                LstFiles.Items.AddRange(reorderedItems.ToArray());
+                for (int i = 0; i < reorderedItems.Count; i++)
+                {
+                    if (selectedItems.Contains(reorderedItems[i]))
+                    {
+                        LstFiles.SetSelected(i, true);
+                    }
+                }
+            }
+            finally
+            {
+                LstFiles.EndUpdate();
+            }
+            UpdateFileMoveButtons();
+        }
+
+        private void BtnMoveFilesFirst_Click(object sender, EventArgs e)
+        {
+            MoveSelectedFiles(FileMoveOperation.First);
+        }
+
+        private void BtnMoveFilesLast_Click(object sender, EventArgs e)
+        {
+            MoveSelectedFiles(FileMoveOperation.Last);
+        }
+
+        private void BtnMoveFilesUp_Click(object sender, EventArgs e)
+        {
+            MoveSelectedFiles(FileMoveOperation.Up);
+        }
+
+        private void BtnMoveFilesDown_Click(object sender, EventArgs e)
+        {
+            MoveSelectedFiles(FileMoveOperation.Down);
         }
 
 
@@ -1257,6 +1374,7 @@ namespace DiscHelper
             {
                 LstFiles.Items.Remove(fileItem);
             }
+            UpdateFileMoveButtons();
         }
 
         private void LstFilesSetPriorityUp_Click(object sender, EventArgs e)
@@ -1502,6 +1620,7 @@ namespace DiscHelper
             {
                 LstFiles.Items.Add(ComplexFileDialog.newFileItem);
             }
+            UpdateFileMoveButtons();
             updateTemplateList();
         }
 
