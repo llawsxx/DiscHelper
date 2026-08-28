@@ -763,7 +763,17 @@ namespace DiscHelper
                             SplitFileItem.CommandExe = item.CommandExe;
                             SplitFileItem.isFirstCommand = StartPos == 0;
                             SplitFileItem.FileId = item.FileId;
-                            SplitFileItem.DestName = item.DestName + $".Segment_{Segment.ToString().PadLeft(PadWidth,'0')}";
+                            string segmentNumber = Segment.ToString().PadLeft(PadWidth, '0');
+                            if (string.IsNullOrEmpty(item.CommandExe))
+                            {
+                                string totalSegmentNumber = MaxSegmentNum.ToString().PadLeft(PadWidth, '0');
+                                SplitFileItem.DestName = item.DestName + $".Segment_{segmentNumber}_of_{totalSegmentNumber}";
+                            }
+                            else
+                            {
+                                // Advanced-file output size is produced by an external command and is not known here.
+                                SplitFileItem.DestName = item.DestName + $".Segment_{segmentNumber}";
+                            }
                             Segment++;
                             StartPos += SplitFileItem.Size;
                             DiscSize += SplitFileItem.Size;
