@@ -73,6 +73,7 @@
             this.LblParArgument = new System.Windows.Forms.Label();
             this.TxtParArgument = new System.Windows.Forms.TextBox();
             this.BtnAddComplexFile = new System.Windows.Forms.Button();
+            this.BtnSaveSettings = new System.Windows.Forms.Button();
             this.LblComplexFileTemplate = new System.Windows.Forms.Label();
             this.CBoxTemplate = new System.Windows.Forms.ComboBox();
             this.PnlFiles.SuspendLayout();
@@ -367,12 +368,11 @@
             this.BtnAllocateDisc.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.BtnAllocateDisc.Location = new System.Drawing.Point(477, 80);
             this.BtnAllocateDisc.Name = "BtnAllocateDisc";
-            this.BtnAllocateDisc.Size = new System.Drawing.Size(53, 29);
+            this.BtnAllocateDisc.Size = new System.Drawing.Size(84, 29);
             this.BtnAllocateDisc.TabIndex = 0;
-            this.BtnAllocateDisc.Text = "分配";
+            this.BtnAllocateDisc.Text = "分配/追加";
             this.BtnAllocateDisc.UseVisualStyleBackColor = true;
             this.BtnAllocateDisc.Click += new System.EventHandler(this.BtnAllocateDisc_Click);
-            // 
             // BtnTempFolder
             // 
             this.BtnTempFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -529,6 +529,7 @@
             this.CBoxAllocatePolicy.Name = "CBoxAllocatePolicy";
             this.CBoxAllocatePolicy.Size = new System.Drawing.Size(119, 25);
             this.CBoxAllocatePolicy.TabIndex = 10;
+            this.CBoxAllocatePolicy.SelectedIndex = 9;
             // 
             // CBoxFirstFit
             // 
@@ -668,6 +669,17 @@
             this.CBoxTemplate.Name = "CBoxTemplate";
             this.CBoxTemplate.Size = new System.Drawing.Size(150, 25);
             this.CBoxTemplate.TabIndex = 19;
+            //
+            // BtnSaveSettings
+            //
+            this.BtnSaveSettings.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.BtnSaveSettings.Location = new System.Drawing.Point(535, 12);
+            this.BtnSaveSettings.Name = "BtnSaveSettings";
+            this.BtnSaveSettings.Size = new System.Drawing.Size(75, 29);
+            this.BtnSaveSettings.TabIndex = 33;
+            this.BtnSaveSettings.Text = "保存配置";
+            this.BtnSaveSettings.UseVisualStyleBackColor = true;
+            this.BtnSaveSettings.Click += new System.EventHandler(this.BtnSaveSettings_Click);
             // 
             // MainUI
             // 
@@ -677,6 +689,7 @@
             this.Controls.Add(this.CBoxTemplate);
             this.Controls.Add(this.LblComplexFileTemplate);
             this.Controls.Add(this.BtnAddComplexFile);
+            this.Controls.Add(this.BtnSaveSettings);
             this.Controls.Add(this.CBoxAllocatePolicy);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.LblVirtualDiskHandles);
@@ -768,6 +781,7 @@
         private System.Windows.Forms.Label LblParArgument;
         private System.Windows.Forms.TextBox TxtParArgument;
         private System.Windows.Forms.Button BtnAddComplexFile;
+        private System.Windows.Forms.Button BtnSaveSettings;
         private System.Windows.Forms.Label LblComplexFileTemplate;
         private System.Windows.Forms.ComboBox CBoxTemplate;
     }

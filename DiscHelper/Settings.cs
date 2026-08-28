@@ -15,7 +15,7 @@ namespace DiscHelper
         public long MinDiscRedundant = 52428800;
         public long MaxDiscRedundant = 209715200;
         public string DiscNamePattern = "Bucket_{1}_Disc_{1:50}";
-        public int AllocatePolicy = 0;
+        public int AllocatePolicy = 9;
         public string OutputFolder = "DISC";
         public string ParExePath = @"MultiPar\par2j64.exe";
         public bool isMove = false;
@@ -96,6 +96,7 @@ namespace DiscHelper
     public class PersistedDiscItem
     {
         public string Name;
+        public string OriginalName;
         public long Capacity;
         public bool IsAvailable;
         public bool IsGenPar;
