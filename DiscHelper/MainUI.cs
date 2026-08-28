@@ -2241,9 +2241,7 @@ namespace DiscHelper
             var discs = requestedDiscs;
             if (discs == null)
             {
-                discs = LstDiscs.SelectedItems.Cast<DiscItem>().ToList();
-                if (discs.Count == 0)
-                    discs = LstDiscs.Items.Cast<DiscItem>().ToList();
+                discs = LstDiscs.Items.Cast<DiscItem>().ToList();
             }
             if (discs.Any(disc => disc.FileItems.Any(item => !string.IsNullOrEmpty(item.CommandExe))))
             {
