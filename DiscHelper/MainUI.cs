@@ -24,6 +24,8 @@ namespace DiscHelper
         Settings AllSettings;
         List<DiscItem> LastAllDiscItems = new List<DiscItem>();
         private VirtualDiskFileSystem _virtualDisk;
+        private static readonly Regex SegmentSuffixPattern = new Regex(@"\.Segment_(\d+)(?:_of_(\d+))?$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
         private static extern int StrCmpLogicalW(string psz1, string psz2);
 
@@ -55,6 +57,7 @@ namespace DiscHelper
             CBoxFirstFit.Checked = settings.isFirstFit;
             CboxCutFile.Checked = settings.isCutFile;
             CBoxGenFileList.Checked = settings.GenerateFileList;
+            CBoxGenMp4Headers.Checked = settings.GenerateMp4PlaybackHeaders;
             NumBuffer.Maximum = int.MaxValue;
             NumBuffer.Value = settings.ReadBuffer > int.MaxValue ? int.MaxValue : settings.ReadBuffer;
             TxtParArgument.Text = settings.ParArgument;
@@ -104,6 +107,7 @@ namespace DiscHelper
             AllSettings.isFirstFit = CBoxFirstFit.Checked;
             AllSettings.isCutFile = CboxCutFile.Checked;
             AllSettings.GenerateFileList = CBoxGenFileList.Checked;
+            AllSettings.GenerateMp4PlaybackHeaders = CBoxGenMp4Headers.Checked;
             AllSettings.ReadBuffer = (long)NumBuffer.Value;
             AllSettings.ParArgument = TxtParArgument.Text;
             AllSettings.VirtualDiskDataPath = TxtVirtualDiskDataPath.Text.Trim();
@@ -271,6 +275,8 @@ namespace DiscHelper
             string ParExePath = Args["ParExePath"] as string;
             string ParArgument = Args["ParArgument"] as string;
             long ReadSize = (long)Args["Buffer"];
+            bool generateMp4Headers = (bool)Args["GenerateMp4Headers"];
+            List<DiscItem> allDiscItems = Args["AllDiscs"] as List<DiscItem>;
             long TotalFileCount = 0;
             long FinishedFileCount = 0;
             ProcessStartInfo processStartInfo = null;
@@ -513,6 +519,10 @@ namespace DiscHelper
 
 
             }
+
+            if (generateMp4Headers && !worker.CancellationPending)
+                GenerateMp4PlaybackPackages(allDiscItems, discItems, OutputPath, worker);
+
             //由于高级文件的存在，如果一个discItem有不是isFirstCommand的FileItem，就需要其它discItem生成完才会有这个isFirstCommand为false的FileItem的生成
             //所以GenPar移到这里
             foreach (DiscItem discItem in discItems)
@@ -1165,6 +1175,8 @@ namespace DiscHelper
             Args["GenPar"] = CBoxGenPar.Checked;
             Args["Buffer"] = (long)NumBuffer.Value;
             Args["ParArgument"] = TxtParArgument.Text;
+            Args["GenerateMp4Headers"] = CBoxGenMp4Headers.Checked;
+            Args["AllDiscs"] = LstDiscs.Items.Cast<DiscItem>().ToList();
             DiscWorker.RunWorkerAsync(Args);
             BtnOutputFile.Text = "停止输出";
             UpdateVirtualDiskButton();
@@ -1705,6 +1717,61 @@ namespace DiscHelper
             ToggleVirtualDisk(null);
         }
 
+        private void BtnSegmentVirtualDisk_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new SegmentVirtualDiskDialog(NormalizeOutputPath(TxtOutputPath.Text)))
+                dialog.ShowDialog(this);
+        }
+
+        private void GenerateMp4PlaybackPackages(List<DiscItem> allDiscs, List<DiscItem> outputDiscs,
+            string outputPath, BackgroundWorker worker)
+        {
+            var allEntries = (allDiscs ?? new List<DiscItem>())
+                .Where(disc => disc.IsAvailable)
+                .SelectMany(disc => disc.FileItems.Select(file => new { Disc = disc, File = file }))
+                .Where(entry => entry.File.StartPos >= 0 && string.IsNullOrEmpty(entry.File.CommandExe) &&
+                    Mp4PlaybackPackage.IsSupportedExtension(StripSegmentSuffix(entry.File.DestName)))
+                .GroupBy(entry => Path.GetFullPath(entry.File.Name) + "\0" + StripSegmentSuffix(entry.File.DestName),
+                    StringComparer.OrdinalIgnoreCase);
+            var outputSet = new HashSet<DiscItem>(outputDiscs ?? new List<DiscItem>());
+
+            foreach (var group in allEntries)
+            {
+                var ordered = group.OrderBy(entry => entry.File.StartPos).ToList();
+                if (ordered.Count < 2 || !ordered.Any(entry => outputSet.Contains(entry.Disc))) continue;
+                string sourcePath = ordered[0].File.Name;
+                string baseDestination = StripSegmentSuffix(ordered[0].File.DestName);
+                try
+                {
+                    var segments = ordered.Select((entry, index) => new Mp4PlaybackSegment
+                    {
+                        FileName = Path.GetFileName(entry.File.DestName),
+                        Offset = entry.File.StartPos,
+                        Length = entry.File.Size,
+                        Index = index + 1,
+                        Total = ordered.Count
+                    }).ToList();
+                    string relativeDirectory = Path.GetDirectoryName(baseDestination) ?? string.Empty;
+                    var targetDirectories = ordered
+                        .Where(entry => outputSet.Contains(entry.Disc))
+                        .Select(entry => Path.Combine(outputPath, entry.Disc.Name, relativeDirectory));
+                    Mp4PlaybackPackage.Write(sourcePath, Path.GetFileName(baseDestination), segments, targetDirectories);
+                    worker.ReportProgress(-1, "已生成 MP4/MOV 播放头：" + baseDestination);
+                }
+                catch (Exception ex)
+                {
+                    string message = "MP4/MOV 播放头生成失败 [" + baseDestination + "]：" + ex.Message;
+                    worker.ReportProgress(-1, message);
+                    TxtCMDOutput.BeginInvoke(new MethodInvoker(() => TxtCMDOutput.AppendText(message + Environment.NewLine)));
+                }
+            }
+        }
+
+        private static string StripSegmentSuffix(string name)
+        {
+            return SegmentSuffixPattern.Replace(name ?? string.Empty, string.Empty);
+        }
+
         private void ToggleVirtualDisk(List<DiscItem> requestedDiscs)
         {
             if (DiscWorker.IsBusy) return;
@@ -1813,6 +1880,7 @@ namespace DiscHelper
         {
             BtnVirtualDisk.Text = _virtualDisk == null ? "挂载虚拟磁盘" : "卸载虚拟磁盘";
             BtnVirtualDisk.Enabled = !DiscWorker.IsBusy;
+            BtnSegmentVirtualDisk.Enabled = !DiscWorker.IsBusy;
             TxtVirtualDiskDataPath.Enabled = _virtualDisk == null && !DiscWorker.IsBusy;
             LblVirtualDiskHandles.Visible = _virtualDisk != null;
             LblVirtualDiskHandles.Text = "虚拟磁盘句柄：" + (_virtualDisk == null ? 0 : _virtualDisk.ActiveFileHandleCount);

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Text.RegularExpressions;
 using Fsp;
 using VolumeInfo = Fsp.Interop.VolumeInfo;
 using FileInfo = Fsp.Interop.FileInfo;
@@ -23,13 +24,24 @@ namespace DiscHelper
             public string BackendPath;
             public DateTime LastWriteUtc;
             public Node Parent;
+            public readonly List<SourceExtent> Extents = new List<SourceExtent>();
             public readonly Dictionary<string, Node> Children = new Dictionary<string, Node>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private sealed class SourceExtent
+        {
+            public long VirtualOffset;
+            public string SourcePath;
+            public long SourceOffset;
+            public long Length;
         }
 
         private sealed class Handle
         {
             public Node Node;
             public FileStream Stream;
+            public readonly Dictionary<string, FileStream> SourceStreams = new Dictionary<string, FileStream>(StringComparer.OrdinalIgnoreCase);
+            public readonly object SyncRoot = new object();
             public bool DeletePending;
             public int IsCounted;
         }
@@ -43,6 +55,8 @@ namespace DiscHelper
 
         private readonly Node _root = new Node { IsDirectory = true };
         private readonly string _backendRoot;
+        private readonly string _volumePath;
+        private readonly bool _readOnlyView;
         private FileSystemHost _host;
         private int _activeFileHandleCount;
 
@@ -51,10 +65,12 @@ namespace DiscHelper
         public int LastMountStatus { get; private set; }
         public int ActiveFileHandleCount { get { return Volatile.Read(ref _activeFileHandleCount); } }
         public event EventHandler ActiveFileHandleCountChanged;
+        public readonly List<string> ScanWarnings = new List<string>();
 
         public VirtualDiskFileSystem(IEnumerable<DiscItem> discs, string backendRoot)
         {
             _backendRoot = Path.GetFullPath(backendRoot);
+            _volumePath = _backendRoot;
             Directory.CreateDirectory(_backendRoot);
             LoadBackendDirectory(new DirectoryInfo(_backendRoot), _root);
 
@@ -66,6 +82,19 @@ namespace DiscHelper
                     AddMapping(disc.Name + "\\" + name, item);
                 }
             }
+        }
+
+        private VirtualDiskFileSystem(string sourceRoot)
+        {
+            _readOnlyView = true;
+            _volumePath = Path.GetFullPath(sourceRoot);
+            if (!Directory.Exists(_volumePath)) throw new DirectoryNotFoundException("Segment 文件夹不存在：" + _volumePath);
+            LoadSegmentDirectory(new DirectoryInfo(_volumePath), _root);
+        }
+
+        public static VirtualDiskFileSystem CreateSegmentView(string sourceRoot)
+        {
+            return new VirtualDiskFileSystem(sourceRoot);
         }
 
         public bool Mount(string mountPoint)
@@ -112,7 +141,7 @@ namespace DiscHelper
             volumeInfo = new VolumeInfo();
             try
             {
-                DriveInfo drive = new DriveInfo(Path.GetPathRoot(_backendRoot));
+                DriveInfo drive = new DriveInfo(Path.GetPathRoot(_volumePath));
                 volumeInfo.TotalSize = (ulong)drive.TotalSize;
                 volumeInfo.FreeSize = (ulong)drive.AvailableFreeSpace;
             }
@@ -137,9 +166,9 @@ namespace DiscHelper
             Handle handle = new Handle { Node = node };
             try
             {
-                if (!node.IsDirectory)
-                    handle.Stream = new FileStream(node.IsMapping ? node.SourcePath : node.BackendPath, FileMode.Open,
-                        node.IsMapping ? FileAccess.Read : FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete);
+                if (!node.IsDirectory && !node.IsMapping)
+                    handle.Stream = new FileStream(node.BackendPath, FileMode.Open, FileAccess.ReadWrite,
+                        FileShare.ReadWrite | FileShare.Delete);
                 fileNode = node;
                 fileDesc = handle;
                 normalizedName = CanonicalPath(node);
@@ -194,6 +223,7 @@ namespace DiscHelper
             fileNode = fileDesc = null;
             fileInfo = new FileInfo();
             normalizedName = null;
+            if (_readOnlyView) return STATUS_ACCESS_DENIED;
             string relative = Normalize(fileName);
             if (string.IsNullOrEmpty(relative) || Find(relative) != null) return STATUS_OBJECT_NAME_COLLISION;
             Node parent = Find(ParentPath(relative));
@@ -229,15 +259,60 @@ namespace DiscHelper
             bytesTransferred = 0;
             if (node == null || node.IsDirectory || handle == null) return STATUS_ACCESS_DENIED;
             if (offset >= (ulong)node.Length) return STATUS_END_OF_FILE;
-            int count = (int)Math.Min((ulong)length, (ulong)node.Length - offset);
+            int count = (int)Math.Min((ulong)int.MaxValue, Math.Min((ulong)length, (ulong)node.Length - offset));
             byte[] bytes = new byte[count];
-            handle.Stream.Seek(node.IsMapping ? node.SourceOffset + (long)offset : (long)offset, SeekOrigin.Begin);
-            int read = 0;
-            while (read < count)
+            if (node.IsMapping)
             {
-                int current = handle.Stream.Read(bytes, read, count - read);
-                if (current <= 0) break;
-                read += current;
+                try
+                {
+                    long requestStart = (long)offset;
+                    long requestEnd = requestStart + count;
+                    lock (handle.SyncRoot)
+                    {
+                        foreach (SourceExtent extent in node.Extents)
+                        {
+                            long extentEnd = extent.VirtualOffset + extent.Length;
+                            long copyStart = Math.Max(requestStart, extent.VirtualOffset);
+                            long copyEnd = Math.Min(requestEnd, extentEnd);
+                            if (copyStart >= copyEnd) continue;
+                            FileStream stream;
+                            if (!handle.SourceStreams.TryGetValue(extent.SourcePath, out stream))
+                            {
+                                stream = new FileStream(extent.SourcePath, FileMode.Open, FileAccess.Read,
+                                    FileShare.ReadWrite | FileShare.Delete);
+                                handle.SourceStreams[extent.SourcePath] = stream;
+                            }
+                            stream.Seek(extent.SourceOffset + copyStart - extent.VirtualOffset, SeekOrigin.Begin);
+                            int destinationOffset = (int)(copyStart - requestStart);
+                            int remaining = (int)(copyEnd - copyStart);
+                            while (remaining > 0)
+                            {
+                                int current = stream.Read(bytes, destinationOffset, remaining);
+                                if (current <= 0) return STATUS_END_OF_FILE;
+                                destinationOffset += current;
+                                remaining -= current;
+                            }
+                        }
+                    }
+                }
+                catch (FileNotFoundException) { return STATUS_OBJECT_NAME_NOT_FOUND; }
+                catch (DirectoryNotFoundException) { return STATUS_OBJECT_PATH_NOT_FOUND; }
+                catch (IOException) { return STATUS_ACCESS_DENIED; }
+                Marshal.Copy(bytes, 0, buffer, count);
+                bytesTransferred = (uint)count;
+                return STATUS_SUCCESS;
+            }
+
+            int read = 0;
+            lock (handle.SyncRoot)
+            {
+                handle.Stream.Seek((long)offset, SeekOrigin.Begin);
+                while (read < count)
+                {
+                    int current = handle.Stream.Read(bytes, read, count - read);
+                    if (current <= 0) break;
+                    read += current;
+                }
             }
             Marshal.Copy(bytes, 0, buffer, read);
             bytesTransferred = (uint)read;
@@ -307,7 +382,12 @@ namespace DiscHelper
             if (handle == null) return;
             try
             {
-                if (handle.Stream != null) handle.Stream.Dispose();
+                lock (handle.SyncRoot)
+                {
+                    if (handle.Stream != null) handle.Stream.Dispose();
+                    foreach (FileStream stream in handle.SourceStreams.Values) stream.Dispose();
+                    handle.SourceStreams.Clear();
+                }
             }
             finally
             {
@@ -467,6 +547,166 @@ namespace DiscHelper
             }
         }
 
+        private void LoadSegmentDirectory(DirectoryInfo directory, Node parent)
+        {
+            var files = directory.EnumerateFiles().ToList();
+            var hidden = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (System.IO.FileInfo metadataFile in files.Where(file =>
+                file.Name.EndsWith(Mp4PlaybackMetadata.MetadataSuffix, StringComparison.OrdinalIgnoreCase)))
+            {
+                hidden.Add(metadataFile.Name);
+                try
+                {
+                    Mp4PlaybackMetadata metadata = Mp4PlaybackPackage.ReadMetadata(metadataFile.FullName);
+                    string headerName = Path.GetFileName(metadata.HeaderFileName);
+                    if (!string.Equals(headerName, metadata.HeaderFileName, StringComparison.Ordinal))
+                        throw new InvalidDataException("头文件名称必须是简单文件名");
+                    string headerPath = Path.Combine(directory.FullName, headerName);
+                    hidden.Add(headerName);
+
+                    string virtualName = Path.GetFileName(metadata.VirtualFileName);
+                    if (!string.Equals(virtualName, metadata.VirtualFileName, StringComparison.Ordinal) ||
+                        string.IsNullOrEmpty(virtualName))
+                        throw new InvalidDataException("虚拟文件名称无效");
+
+                    var node = new Node
+                    {
+                        Name = virtualName,
+                        Parent = parent,
+                        IsMapping = true,
+                        Length = metadata.OriginalLength,
+                        LastWriteUtc = metadataFile.LastWriteTimeUtc
+                    };
+                    foreach (Mp4HeaderExtent extent in Mp4PlaybackPackage.ReadHeaderExtents(headerPath, metadata.OriginalLength))
+                    {
+                        node.Extents.Add(new SourceExtent
+                        {
+                            VirtualOffset = extent.VirtualOffset,
+                            SourcePath = headerPath,
+                            SourceOffset = extent.SourceOffset,
+                            Length = extent.Length
+                        });
+                    }
+                    foreach (Mp4PlaybackSegment segment in metadata.Segments ?? new List<Mp4PlaybackSegment>())
+                    {
+                        if (segment == null || segment.Offset < 0 || segment.Length <= 0 ||
+                            segment.Offset > metadata.OriginalLength - segment.Length)
+                        {
+                            ScanWarnings.Add(metadataFile.FullName + " 包含无效的 Segment 区间");
+                            continue;
+                        }
+                        if (string.IsNullOrEmpty(segment.FileName)) continue;
+                        string segmentName = Path.GetFileName(segment.FileName);
+                        if (!string.Equals(segmentName, segment.FileName, StringComparison.Ordinal)) continue;
+                        string segmentPath = Path.Combine(directory.FullName, segmentName);
+                        if (!File.Exists(segmentPath)) continue;
+                        long available = new System.IO.FileInfo(segmentPath).Length;
+                        if (available < segment.Length)
+                        {
+                            ScanWarnings.Add(segmentPath + " 长度不足，已忽略");
+                            continue;
+                        }
+                        hidden.Add(segmentName);
+                        node.Extents.Add(new SourceExtent
+                        {
+                            VirtualOffset = segment.Offset,
+                            SourcePath = segmentPath,
+                            SourceOffset = 0,
+                            Length = segment.Length
+                        });
+                    }
+                    if (!parent.Children.ContainsKey(node.Name)) parent.Children[node.Name] = node;
+                }
+                catch (Exception ex)
+                {
+                    ScanWarnings.Add(metadataFile.FullName + "：" + ex.Message);
+                }
+            }
+
+            var segmentPattern = new Regex(@"^(?<name>.+)\.Segment_(?<index>\d+)(?:_of_(?<total>\d+))?$",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            var segmentGroups = files
+                .Where(file => !hidden.Contains(file.Name))
+                .Select(file => new { File = file, Match = segmentPattern.Match(file.Name) })
+                .Where(item => item.Match.Success)
+                .GroupBy(item => item.Match.Groups["name"].Value, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var group in segmentGroups)
+            {
+                var ordered = group.OrderBy(item => ParseSegmentNumber(item.Match.Groups["index"].Value))
+                    .ThenBy(item => item.File.Name, StringComparer.OrdinalIgnoreCase).ToList();
+                var indices = ordered.Select(item => ParseSegmentNumber(item.Match.Groups["index"].Value)).ToList();
+                long? declaredTotal = ordered
+                    .Where(item => item.Match.Groups["total"].Success)
+                    .Select(item => (long?)ParseSegmentNumber(item.Match.Groups["total"].Value))
+                    .FirstOrDefault();
+                bool complete = indices.Count > 0 && indices[0] == 1 &&
+                    indices.Distinct().Count() == indices.Count &&
+                    indices.Select((value, index) => value == index + 1).All(value => value) &&
+                    (!declaredTotal.HasValue || declaredTotal.Value == indices.Count) &&
+                    ordered.Where(item => item.Match.Groups["total"].Success)
+                        .All(item => ParseSegmentNumber(item.Match.Groups["total"].Value) == declaredTotal.Value);
+                if (!complete)
+                {
+                    ScanWarnings.Add(Path.Combine(directory.FullName, group.Key) + " 的 Segment 不完整，已保留原文件");
+                    continue;
+                }
+                foreach (var item in ordered) hidden.Add(item.File.Name);
+                if (parent.Children.ContainsKey(group.Key)) continue;
+                var node = new Node
+                {
+                    Name = group.Key,
+                    Parent = parent,
+                    IsMapping = true,
+                    LastWriteUtc = ordered.Max(item => item.File.LastWriteTimeUtc)
+                };
+                long virtualOffset = 0;
+                foreach (var item in ordered)
+                {
+                    node.Extents.Add(new SourceExtent
+                    {
+                        VirtualOffset = virtualOffset,
+                        SourcePath = item.File.FullName,
+                        SourceOffset = 0,
+                        Length = item.File.Length
+                    });
+                    virtualOffset += item.File.Length;
+                }
+                node.Length = virtualOffset;
+                parent.Children[node.Name] = node;
+            }
+
+            foreach (System.IO.FileInfo file in files.Where(file => !hidden.Contains(file.Name)))
+            {
+                if (parent.Children.ContainsKey(file.Name)) continue;
+                var node = new Node
+                {
+                    Name = file.Name,
+                    Parent = parent,
+                    IsMapping = true,
+                    Length = file.Length,
+                    LastWriteUtc = file.LastWriteTimeUtc
+                };
+                node.Extents.Add(new SourceExtent { SourcePath = file.FullName, Length = file.Length });
+                parent.Children[node.Name] = node;
+            }
+
+            foreach (DirectoryInfo childDirectory in directory.EnumerateDirectories())
+            {
+                var node = new Node
+                {
+                    Name = childDirectory.Name,
+                    IsDirectory = true,
+                    IsMapping = true,
+                    LastWriteUtc = childDirectory.LastWriteTimeUtc,
+                    Parent = parent
+                };
+                parent.Children[node.Name] = node;
+                LoadSegmentDirectory(childDirectory, node);
+            }
+        }
+
         private void AddMapping(string path, FileItem item)
         {
             string relative = Normalize(path);
@@ -480,6 +720,14 @@ namespace DiscHelper
                 Name = parts[parts.Length - 1], Parent = parent, IsMapping = true, SourcePath = item.Name,
                 SourceOffset = Math.Max(0, item.StartPos), Length = item.Size, LastWriteUtc = item.CreateTime.ToUniversalTime()
             };
+            Node node = parent.Children[parts[parts.Length - 1]];
+            node.Extents.Add(new SourceExtent
+            {
+                VirtualOffset = 0,
+                SourcePath = item.Name,
+                SourceOffset = Math.Max(0, item.StartPos),
+                Length = item.Size
+            });
         }
 
         private Node AddNode(string path, bool directory, bool mapping, string backendPath, string sourcePath,
@@ -570,6 +818,7 @@ namespace DiscHelper
 
         private string GetBackendPath(string relative)
         {
+            if (_readOnlyView || string.IsNullOrEmpty(_backendRoot)) throw new IOException("只读虚拟磁盘不能创建文件");
             string result = Path.GetFullPath(Path.Combine(_backendRoot, Normalize(relative)));
             string rootWithSeparator = _backendRoot.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
             if (!result.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase)) throw new IOException("虚拟磁盘路径超出 data 目录");
@@ -578,6 +827,7 @@ namespace DiscHelper
 
         private static string Normalize(string path) { return (path ?? string.Empty).Replace('/', '\\').Trim('\\'); }
         private static string ParentPath(string path) { int index = path.LastIndexOf('\\'); return index < 0 ? string.Empty : path.Substring(0, index); }
+        private static long ParseSegmentNumber(string value) { long result; return long.TryParse(value, out result) ? result : long.MaxValue; }
         private static uint Attributes(Node node) { return (uint)(node.IsDirectory ? FileAttributes.Directory : FileAttributes.Archive); }
         private static void FillInfo(Node node, out FileInfo info)
         {

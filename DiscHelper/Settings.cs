@@ -23,6 +23,7 @@ namespace DiscHelper
         public bool isFirstFit = false;
         public bool isCutFile = false;
         public bool GenerateFileList = false;
+        public bool GenerateMp4PlaybackHeaders = false;
         public long ReadBuffer = 1024 * 1024;
         public string ParArgument = "/sn32768";
         public string VirtualDiskDataPath = "data";

@@ -46,6 +46,7 @@
             this.LblVirtualDiskDataPath = new System.Windows.Forms.Label();
             this.TxtVirtualDiskDataPath = new System.Windows.Forms.TextBox();
             this.BtnVirtualDisk = new System.Windows.Forms.Button();
+            this.BtnSegmentVirtualDisk = new System.Windows.Forms.Button();
             this.LblVirtualDiskHandles = new System.Windows.Forms.Label();
             this.NumDiscCapacity = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
@@ -66,6 +67,7 @@
             this.DiscHelperMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.CboxCutFile = new System.Windows.Forms.CheckBox();
             this.CBoxGenFileList = new System.Windows.Forms.CheckBox();
+            this.CBoxGenMp4Headers = new System.Windows.Forms.CheckBox();
             this.NumBuffer = new System.Windows.Forms.NumericUpDown();
             this.LblBufferSize = new System.Windows.Forms.Label();
             this.LblParArgument = new System.Windows.Forms.Label();
@@ -118,7 +120,7 @@
             this.LstFiles.Location = new System.Drawing.Point(0, 0);
             this.LstFiles.Name = "LstFiles";
             this.LstFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.LstFiles.Size = new System.Drawing.Size(414, 123);
+            this.LstFiles.Size = new System.Drawing.Size(570, 123);
             this.LstFiles.TabIndex = 1;
             this.LstFiles.SelectedIndexChanged += new System.EventHandler(this.LstFiles_SelectedIndexChanged);
             this.LstFiles.DragDrop += new System.Windows.Forms.DragEventHandler(this.LstFiles_DragDrop);
@@ -135,14 +137,14 @@
             this.PnlFiles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.PnlFiles.Location = new System.Drawing.Point(0, 0);
             this.PnlFiles.Name = "PnlFiles";
-            this.PnlFiles.Size = new System.Drawing.Size(517, 123);
+            this.PnlFiles.Size = new System.Drawing.Size(673, 123);
             this.PnlFiles.TabIndex = 20;
             // 
             // BtnMoveFilesFirst
             // 
             this.BtnMoveFilesFirst.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnMoveFilesFirst.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnMoveFilesFirst.Location = new System.Drawing.Point(420, 0);
+            this.BtnMoveFilesFirst.Location = new System.Drawing.Point(576, 0);
             this.BtnMoveFilesFirst.Name = "BtnMoveFilesFirst";
             this.BtnMoveFilesFirst.Size = new System.Drawing.Size(97, 29);
             this.BtnMoveFilesFirst.TabIndex = 21;
@@ -154,7 +156,7 @@
             // 
             this.BtnMoveFilesLast.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnMoveFilesLast.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnMoveFilesLast.Location = new System.Drawing.Point(420, 31);
+            this.BtnMoveFilesLast.Location = new System.Drawing.Point(576, 31);
             this.BtnMoveFilesLast.Name = "BtnMoveFilesLast";
             this.BtnMoveFilesLast.Size = new System.Drawing.Size(97, 29);
             this.BtnMoveFilesLast.TabIndex = 22;
@@ -166,7 +168,7 @@
             // 
             this.BtnMoveFilesUp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnMoveFilesUp.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnMoveFilesUp.Location = new System.Drawing.Point(420, 62);
+            this.BtnMoveFilesUp.Location = new System.Drawing.Point(576, 62);
             this.BtnMoveFilesUp.Name = "BtnMoveFilesUp";
             this.BtnMoveFilesUp.Size = new System.Drawing.Size(97, 29);
             this.BtnMoveFilesUp.TabIndex = 23;
@@ -178,7 +180,7 @@
             // 
             this.BtnMoveFilesDown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnMoveFilesDown.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnMoveFilesDown.Location = new System.Drawing.Point(420, 94);
+            this.BtnMoveFilesDown.Location = new System.Drawing.Point(576, 94);
             this.BtnMoveFilesDown.Name = "BtnMoveFilesDown";
             this.BtnMoveFilesDown.Size = new System.Drawing.Size(97, 29);
             this.BtnMoveFilesDown.TabIndex = 24;
@@ -210,8 +212,9 @@
             this.SplitFiles.Panel2.Controls.Add(this.LblVirtualDiskDataPath);
             this.SplitFiles.Panel2.Controls.Add(this.TxtVirtualDiskDataPath);
             this.SplitFiles.Panel2.Controls.Add(this.BtnVirtualDisk);
+            this.SplitFiles.Panel2.Controls.Add(this.BtnSegmentVirtualDisk);
             this.SplitFiles.Panel2MinSize = 177;
-            this.SplitFiles.Size = new System.Drawing.Size(517, 304);
+            this.SplitFiles.Size = new System.Drawing.Size(673, 304);
             this.SplitFiles.SplitterDistance = 123;
             this.SplitFiles.TabIndex = 25;
             // 
@@ -243,7 +246,7 @@
             this.LstDiscFiles.Location = new System.Drawing.Point(255, 37);
             this.LstDiscFiles.Name = "LstDiscFiles";
             this.LstDiscFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.LstDiscFiles.Size = new System.Drawing.Size(263, 140);
+            this.LstDiscFiles.Size = new System.Drawing.Size(419, 140);
             this.LstDiscFiles.TabIndex = 1;
             this.LstDiscFiles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.LstDiscFiles_MouseDown);
             // 
@@ -288,8 +291,7 @@
             // 
             // TxtVirtualDiskDataPath
             // 
-            this.TxtVirtualDiskDataPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TxtVirtualDiskDataPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.TxtVirtualDiskDataPath.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.TxtVirtualDiskDataPath.Location = new System.Drawing.Point(311, 6);
             this.TxtVirtualDiskDataPath.Name = "TxtVirtualDiskDataPath";
@@ -299,7 +301,7 @@
             // 
             // BtnVirtualDisk
             // 
-            this.BtnVirtualDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.BtnVirtualDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.BtnVirtualDisk.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.BtnVirtualDisk.Location = new System.Drawing.Point(424, 3);
             this.BtnVirtualDisk.Name = "BtnVirtualDisk";
@@ -308,11 +310,23 @@
             this.BtnVirtualDisk.Text = "挂载虚拟磁盘";
             this.BtnVirtualDisk.UseVisualStyleBackColor = true;
             this.BtnVirtualDisk.Click += new System.EventHandler(this.BtnVirtualDisk_Click);
+            //
+            // BtnSegmentVirtualDisk
+            //
+            this.BtnSegmentVirtualDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.BtnSegmentVirtualDisk.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.BtnSegmentVirtualDisk.Location = new System.Drawing.Point(524, 3);
+            this.BtnSegmentVirtualDisk.Name = "BtnSegmentVirtualDisk";
+            this.BtnSegmentVirtualDisk.Size = new System.Drawing.Size(149, 29);
+            this.BtnSegmentVirtualDisk.TabIndex = 30;
+            this.BtnSegmentVirtualDisk.Text = "Segment合并虚拟磁盘...";
+            this.BtnSegmentVirtualDisk.UseVisualStyleBackColor = true;
+            this.BtnSegmentVirtualDisk.Click += new System.EventHandler(this.BtnSegmentVirtualDisk_Click);
             // 
             // LblVirtualDiskHandles
             // 
             this.LblVirtualDiskHandles.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.LblVirtualDiskHandles.Location = new System.Drawing.Point(381, 48);
+            this.LblVirtualDiskHandles.Location = new System.Drawing.Point(537, 48);
             this.LblVirtualDiskHandles.Name = "LblVirtualDiskHandles";
             this.LblVirtualDiskHandles.Size = new System.Drawing.Size(148, 29);
             this.LblVirtualDiskHandles.TabIndex = 28;
@@ -375,7 +389,7 @@
             // 
             this.BtnOutputFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnOutputFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnOutputFile.Location = new System.Drawing.Point(453, 428);
+            this.BtnOutputFile.Location = new System.Drawing.Point(609, 428);
             this.BtnOutputFile.Name = "BtnOutputFile";
             this.BtnOutputFile.Size = new System.Drawing.Size(76, 29);
             this.BtnOutputFile.TabIndex = 0;
@@ -416,7 +430,7 @@
             this.CBoxGenPar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxGenPar.AutoSize = true;
             this.CBoxGenPar.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxGenPar.Location = new System.Drawing.Point(296, 433);
+            this.CBoxGenPar.Location = new System.Drawing.Point(452, 433);
             this.CBoxGenPar.Name = "CBoxGenPar";
             this.CBoxGenPar.Size = new System.Drawing.Size(70, 21);
             this.CBoxGenPar.TabIndex = 5;
@@ -456,7 +470,7 @@
             this.CBoxMoveFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxMoveFile.AutoSize = true;
             this.CBoxMoveFile.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxMoveFile.Location = new System.Drawing.Point(372, 433);
+            this.CBoxMoveFile.Location = new System.Drawing.Point(528, 433);
             this.CBoxMoveFile.Name = "CBoxMoveFile";
             this.CBoxMoveFile.Size = new System.Drawing.Size(75, 21);
             this.CBoxMoveFile.TabIndex = 5;
@@ -465,8 +479,7 @@
             // 
             // TxtOutputPath
             // 
-            this.TxtOutputPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TxtOutputPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.TxtOutputPath.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.TxtOutputPath.Location = new System.Drawing.Point(126, 431);
             this.TxtOutputPath.Name = "TxtOutputPath";
@@ -482,7 +495,7 @@
             this.TxtCMDOutput.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.TxtCMDOutput.Location = new System.Drawing.Point(15, 463);
             this.TxtCMDOutput.Name = "TxtCMDOutput";
-            this.TxtCMDOutput.Size = new System.Drawing.Size(517, 100);
+            this.TxtCMDOutput.Size = new System.Drawing.Size(673, 100);
             this.TxtCMDOutput.TabIndex = 8;
             this.TxtCMDOutput.Text = "";
             // 
@@ -550,12 +563,24 @@
             this.CBoxGenFileList.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.CBoxGenFileList.AutoSize = true;
             this.CBoxGenFileList.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.CBoxGenFileList.Location = new System.Drawing.Point(215, 433);
+            this.CBoxGenFileList.Location = new System.Drawing.Point(371, 433);
             this.CBoxGenFileList.Name = "CBoxGenFileList";
             this.CBoxGenFileList.Size = new System.Drawing.Size(75, 21);
             this.CBoxGenFileList.TabIndex = 5;
             this.CBoxGenFileList.Text = "生成列表";
             this.CBoxGenFileList.UseVisualStyleBackColor = true;
+            //
+            // CBoxGenMp4Headers
+            //
+            this.CBoxGenMp4Headers.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.CBoxGenMp4Headers.AutoSize = true;
+            this.CBoxGenMp4Headers.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.CBoxGenMp4Headers.Location = new System.Drawing.Point(215, 433);
+            this.CBoxGenMp4Headers.Name = "CBoxGenMp4Headers";
+            this.CBoxGenMp4Headers.Size = new System.Drawing.Size(150, 21);
+            this.CBoxGenMp4Headers.TabIndex = 31;
+            this.CBoxGenMp4Headers.Text = "生成MP4/MOV独立头";
+            this.CBoxGenMp4Headers.UseVisualStyleBackColor = true;
             // 
             // NumBuffer
             // 
@@ -610,7 +635,7 @@
             this.TxtParArgument.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.TxtParArgument.Location = new System.Drawing.Point(251, 569);
             this.TxtParArgument.Name = "TxtParArgument";
-            this.TxtParArgument.Size = new System.Drawing.Size(278, 23);
+            this.TxtParArgument.Size = new System.Drawing.Size(434, 23);
             this.TxtParArgument.TabIndex = 7;
             // 
             // BtnAddComplexFile
@@ -648,7 +673,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(544, 601);
+            this.ClientSize = new System.Drawing.Size(700, 601);
             this.Controls.Add(this.CBoxTemplate);
             this.Controls.Add(this.LblComplexFileTemplate);
             this.Controls.Add(this.BtnAddComplexFile);
@@ -662,6 +687,7 @@
             this.Controls.Add(this.CboxCutFile);
             this.Controls.Add(this.CBoxFirstFit);
             this.Controls.Add(this.CBoxGenFileList);
+            this.Controls.Add(this.CBoxGenMp4Headers);
             this.Controls.Add(this.CBoxGenPar);
             this.Controls.Add(this.SplitFiles);
             this.Controls.Add(this.LblParArgument);
@@ -726,6 +752,7 @@
         private System.Windows.Forms.Label LblVirtualDiskHandles;
         private System.Windows.Forms.TextBox TxtVirtualDiskDataPath;
         private System.Windows.Forms.Button BtnVirtualDisk;
+        private System.Windows.Forms.Button BtnSegmentVirtualDisk;
         private System.Windows.Forms.CheckBox CBoxMoveFile;
         private System.Windows.Forms.TextBox TxtOutputPath;
         private System.Windows.Forms.RichTextBox TxtCMDOutput;
@@ -735,6 +762,7 @@
         private System.Windows.Forms.ContextMenuStrip DiscHelperMenuStrip;
         private System.Windows.Forms.CheckBox CboxCutFile;
         private System.Windows.Forms.CheckBox CBoxGenFileList;
+        private System.Windows.Forms.CheckBox CBoxGenMp4Headers;
         private System.Windows.Forms.NumericUpDown NumBuffer;
         private System.Windows.Forms.Label LblBufferSize;
         private System.Windows.Forms.Label LblParArgument;
