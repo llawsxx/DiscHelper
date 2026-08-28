@@ -1445,6 +1445,94 @@ namespace DiscHelper
             return true;
         }
 
+        private bool ValidateOutputSources(IEnumerable<DiscItem> discs)
+        {
+            List<string> errors = new List<string>();
+            HashSet<string> checkedItems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (DiscItem disc in discs ?? Enumerable.Empty<DiscItem>())
+            {
+                if (!disc.IsAvailable) continue;
+                foreach (FileItem item in disc.FileItems)
+                {
+                    if (!string.IsNullOrEmpty(item.CommandExe))
+                    {
+                        string commandKey = "COMMAND\0" + item.CommandExe;
+                        if (checkedItems.Add(commandKey) && !ExecutableExists(item.CommandExe))
+                        {
+                            errors.Add(string.Format("[{0}] {1}\n  高级文件生成程序不存在：{2}",
+                                disc.Name, item.DestName, item.CommandExe));
+                        }
+                        continue;
+                    }
+                    string sourcePath = item.Name ?? string.Empty;
+                    string checkKey = sourcePath + "\0" + item.FileId + "\0" + item.StartPos + "\0" + item.Size;
+                    if (!checkedItems.Add(checkKey)) continue;
+                    try
+                    {
+                        FileInfo source = new FileInfo(sourcePath);
+                        if (!source.Exists)
+                        {
+                            errors.Add(string.Format("[{0}] {1}\n  来源不存在：{2}", disc.Name, item.DestName, GetFullSourcePath(item)));
+                            continue;
+                        }
+
+                        bool isSegment = item.StartPos >= 0;
+                        long requiredLength = Math.Max(0, item.StartPos) + item.Size;
+                        bool sizeMatches = isSegment ? source.Length >= requiredLength : source.Length == item.Size;
+                        if (!sizeMatches)
+                        {
+                            string expected = isSegment ? ">= " + requiredLength : item.Size.ToString();
+                            errors.Add(string.Format("[{0}] {1}\n  来源：{2}\n  要求大小：{3} 字节，实际大小：{4} 字节",
+                                disc.Name, item.DestName, source.FullName, expected, source.Length));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add(string.Format("[{0}] {1}\n  来源无法读取：{2}\n  {3}", disc.Name, item.DestName, sourcePath, ex.Message));
+                    }
+                }
+            }
+
+            if (errors.Count == 0) return true;
+            string message = "以下文件来源不存在或大小不符合要求，无法开始输出：" + Environment.NewLine +
+                string.Join(Environment.NewLine, errors);
+            TxtCMDOutput.AppendText(message + Environment.NewLine);
+            MessageBox.Show(message, "输出检查失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return false;
+        }
+
+        private static bool ExecutableExists(string executable)
+        {
+            string value = (executable ?? string.Empty).Trim().Trim('"');
+            if (string.IsNullOrEmpty(value)) return false;
+            if (Path.IsPathRooted(value) || value.IndexOf(Path.DirectorySeparatorChar) >= 0 ||
+                value.IndexOf(Path.AltDirectorySeparatorChar) >= 0)
+            {
+                try { return File.Exists(Path.GetFullPath(value)); }
+                catch { return false; }
+            }
+
+            string[] extensions = Path.HasExtension(value)
+                ? new[] { string.Empty }
+                : (Environment.GetEnvironmentVariable("PATHEXT") ?? ".EXE;.COM;.BAT;.CMD")
+                    .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            IEnumerable<string> directories = new[] { Environment.CurrentDirectory }
+                .Concat((Environment.GetEnvironmentVariable("PATH") ?? string.Empty)
+                    .Split(new[] { Path.PathSeparator }, StringSplitOptions.RemoveEmptyEntries));
+            foreach (string directory in directories)
+            {
+                foreach (string extension in extensions)
+                {
+                    try
+                    {
+                        if (File.Exists(Path.Combine(directory.Trim().Trim('"'), value + extension))) return true;
+                    }
+                    catch { }
+                }
+            }
+            return false;
+        }
+
         private void BtnOutputFile_Click(object sender, EventArgs e)
         {
             if (DiscWorker.IsBusy)
@@ -1467,6 +1555,7 @@ namespace DiscHelper
                 MessageBox.Show("没有文件可输出", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
+            if (!ValidateOutputSources(discItems)) return;
             if (CBoxGenFileList.Checked)
             {
                 OutputFileListTxt(discItems);
@@ -1924,13 +2013,15 @@ namespace DiscHelper
         private void LstDiscsItemOutput_Click(object sender, EventArgs e)
         {
             var item = (ToolStripItem)sender;
+            List<DiscItem> discItems = item.Tag as List<DiscItem>;
+            if (!ValidateOutputSources(discItems)) return;
             if (CBoxGenFileList.Checked)
             {
-                OutputFileListTxt(item.Tag as List<DiscItem>);
+                OutputFileListTxt(discItems);
             }
-            if (CheckDiscItems(item.Tag as List<DiscItem>) && CheckDuplicateFileItems(item.Tag as List<DiscItem>))
+            if (CheckDiscItems(discItems) && CheckDuplicateFileItems(discItems))
             {
-                OutputFileDoWork(item.Tag as List<DiscItem>);
+                OutputFileDoWork(discItems);
             }
         }
 
