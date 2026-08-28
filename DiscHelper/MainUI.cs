@@ -120,16 +120,19 @@ namespace DiscHelper
                 return;
             }
 
-            if (LstDiscFiles.Items.Count > 0 || LstFiles.Items.Count > 0)
+            DialogResult saveResult = MessageBox.Show("是否保存配置？", "关闭软件", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            if (saveResult == DialogResult.Cancel)
             {
-                if (MessageBox.Show("是否确认关闭？", "警告", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                {
-                    e.Cancel = true;
-                    return;
-                }
+                e.Cancel = true;
+                return;
             }
 
-            SaveCurrentSettings(false);
+            if (saveResult == DialogResult.Yes && !SaveCurrentSettings(false))
+            {
+                MessageBox.Show("配置保存失败，已取消关闭。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                e.Cancel = true;
+                return;
+            }
             if (!TryUnmountVirtualDisk(true))
             {
                 e.Cancel = true;
