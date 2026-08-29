@@ -21,6 +21,7 @@ namespace DiscHelper
             public string SourcePath;
             public long SourceOffset;
             public long Length;
+            public long AllocationLength;
             public string BackendPath;
             public DateTime LastWriteUtc;
             public Node Parent;
@@ -122,8 +123,9 @@ namespace DiscHelper
         public override int Init(object host0)
         {
             FileSystemHost host = (FileSystemHost)host0;
-            host.SectorSize = 4096;
-            host.SectorsPerAllocationUnit = 1;
+            // Use the standard 512-byte sector and expose 4 KiB allocation units.
+            host.SectorSize = 512;
+            host.SectorsPerAllocationUnit = 8;
             host.MaxComponentLength = 255;
             host.CaseSensitiveSearch = false;
             host.CasePreservedNames = true;
@@ -194,9 +196,11 @@ namespace DiscHelper
 
             try
             {
-                handle.Stream.SetLength((long)allocationSize);
+                // Keep the backend file at the logical EOF; allocationSize is only a filesystem hint.
+                handle.Stream.SetLength(0);
                 handle.Stream.Position = 0;
-                node.Length = (long)allocationSize;
+                node.Length = 0;
+                node.AllocationLength = (long)allocationSize;
                 node.LastWriteUtc = DateTime.UtcNow;
                 if (replaceFileAttributes)
                 {
@@ -235,10 +239,11 @@ namespace DiscHelper
             if (directory)
                 Directory.CreateDirectory(backendPath);
             else
-                using (FileStream stream = new FileStream(backendPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
-                    if (allocationSize > 0) stream.SetLength((long)allocationSize);
+                using (FileStream stream = new FileStream(backendPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete)) { }
 
-            Node node = AddNode(relative, directory, false, backendPath, null, 0, (long)allocationSize, DateTime.UtcNow);
+            // allocationSize is physical allocation, not the logical EOF. New files start empty.
+            Node node = AddNode(relative, directory, false, backendPath, null, 0, 0, DateTime.UtcNow);
+            node.AllocationLength = directory ? 0 : (long)allocationSize;
             Handle handle = new Handle
             {
                 Node = node,
@@ -329,11 +334,18 @@ namespace DiscHelper
             if (node == null || node.IsDirectory || node.IsMapping || handle == null || handle.Stream == null) return STATUS_ACCESS_DENIED;
             byte[] bytes = new byte[length];
             Marshal.Copy(buffer, bytes, 0, bytes.Length);
-            handle.Stream.Seek(writeToEndOfFile ? 0 : (long)offset, writeToEndOfFile ? SeekOrigin.End : SeekOrigin.Begin);
-            handle.Stream.Write(bytes, 0, bytes.Length);
-            handle.Stream.Flush();
-            node.Length = handle.Stream.Length;
-            node.LastWriteUtc = DateTime.UtcNow;
+            lock (handle.SyncRoot)
+            {
+                long writeOffset = writeToEndOfFile ? node.Length : (long)offset;
+                if (writeOffset < 0) return STATUS_ACCESS_DENIED;
+                handle.Stream.Seek(writeOffset, SeekOrigin.Begin);
+                handle.Stream.Write(bytes, 0, bytes.Length);
+                handle.Stream.Flush();
+                long endOffset = writeOffset + bytes.Length;
+                if (endOffset > node.Length) node.Length = endOffset;
+                if (handle.Stream.Length > node.AllocationLength) node.AllocationLength = handle.Stream.Length;
+                node.LastWriteUtc = DateTime.UtcNow;
+            }
             bytesTransferred = length;
             FillInfo(node, out fileInfo);
             return STATUS_SUCCESS;
@@ -429,8 +441,23 @@ namespace DiscHelper
                 fileInfo = new FileInfo();
                 return STATUS_ACCESS_DENIED;
             }
-            handle.Stream.SetLength((long)newSize);
-            node.Length = (long)newSize;
+            long requestedSize = (long)newSize;
+            if (setAllocationSize)
+            {
+                if (requestedSize < node.Length)
+                {
+                    node.Length = requestedSize;
+                    if (handle.Stream.Length > requestedSize) handle.Stream.SetLength(requestedSize);
+                }
+                node.AllocationLength = requestedSize;
+            }
+            else
+            {
+                long allocationLength = Math.Max(node.AllocationLength, (requestedSize + 4095) / 4096 * 4096);
+                if (handle.Stream.Length != requestedSize) handle.Stream.SetLength(requestedSize);
+                node.Length = requestedSize;
+                node.AllocationLength = allocationLength;
+            }
             FillInfo(node, out fileInfo);
             return STATUS_SUCCESS;
         }
@@ -543,7 +570,8 @@ namespace DiscHelper
             }
             foreach (System.IO.FileInfo file in directory.EnumerateFiles())
             {
-                parent.Children[file.Name] = new Node { Name = file.Name, BackendPath = file.FullName, Length = file.Length, LastWriteUtc = file.LastWriteTimeUtc, Parent = parent };
+                parent.Children[file.Name] = new Node { Name = file.Name, BackendPath = file.FullName, Length = file.Length,
+                    AllocationLength = file.Length, LastWriteUtc = file.LastWriteTimeUtc, Parent = parent };
             }
         }
 
@@ -578,6 +606,7 @@ namespace DiscHelper
                         Length = metadata.OriginalLength,
                         LastWriteUtc = metadataFile.LastWriteTimeUtc
                     };
+                    node.AllocationLength = metadata.OriginalLength;
                     foreach (Mp4HeaderExtent extent in Mp4PlaybackPackage.ReadHeaderExtents(headerPath, metadata.OriginalLength))
                     {
                         node.Extents.Add(new SourceExtent
@@ -674,6 +703,7 @@ namespace DiscHelper
                     virtualOffset += item.File.Length;
                 }
                 node.Length = virtualOffset;
+                node.AllocationLength = virtualOffset;
                 parent.Children[node.Name] = node;
             }
 
@@ -688,6 +718,7 @@ namespace DiscHelper
                     Length = file.Length,
                     LastWriteUtc = file.LastWriteTimeUtc
                 };
+                node.AllocationLength = file.Length;
                 node.Extents.Add(new SourceExtent { SourcePath = file.FullName, Length = file.Length });
                 parent.Children[node.Name] = node;
             }
@@ -718,7 +749,8 @@ namespace DiscHelper
             parent.Children[parts[parts.Length - 1]] = new Node
             {
                 Name = parts[parts.Length - 1], Parent = parent, IsMapping = true, SourcePath = item.Name,
-                SourceOffset = Math.Max(0, item.StartPos), Length = item.Size, LastWriteUtc = item.CreateTime.ToUniversalTime()
+                SourceOffset = Math.Max(0, item.StartPos), Length = item.Size,
+                AllocationLength = item.Size, LastWriteUtc = item.CreateTime.ToUniversalTime()
             };
             Node node = parent.Children[parts[parts.Length - 1]];
             node.Extents.Add(new SourceExtent
@@ -832,7 +864,8 @@ namespace DiscHelper
         private static void FillInfo(Node node, out FileInfo info)
         {
             info = new FileInfo { FileAttributes = Attributes(node), FileSize = node.IsDirectory ? 0UL : (ulong)Math.Max(0, node.Length) };
-            info.AllocationSize = (info.FileSize + 4095) / 4096 * 4096;
+            long allocationLength = Math.Max(node.AllocationLength, (long)info.FileSize);
+            info.AllocationSize = (ulong)((allocationLength + 4095) / 4096 * 4096);
             long time = (node.LastWriteUtc == default(DateTime) ? DateTime.UtcNow : node.LastWriteUtc).ToFileTimeUtc();
             info.CreationTime = info.LastAccessTime = info.LastWriteTime = info.ChangeTime = (ulong)time;
             info.HardLinks = 1;
