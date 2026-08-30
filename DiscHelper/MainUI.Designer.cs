@@ -74,6 +74,8 @@
             this.TxtParArgument = new System.Windows.Forms.TextBox();
             this.BtnAddComplexFile = new System.Windows.Forms.Button();
             this.BtnSaveSettings = new System.Windows.Forms.Button();
+            this.BtnUndoSettings = new System.Windows.Forms.Button();
+            this.BtnRedoSettings = new System.Windows.Forms.Button();
             this.LblComplexFileTemplate = new System.Windows.Forms.Label();
             this.CBoxTemplate = new System.Windows.Forms.ComboBox();
             this.PnlFiles.SuspendLayout();
@@ -292,7 +294,6 @@
             // 
             // TxtVirtualDiskDataPath
             // 
-            this.TxtVirtualDiskDataPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.TxtVirtualDiskDataPath.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.TxtVirtualDiskDataPath.Location = new System.Drawing.Point(311, 6);
             this.TxtVirtualDiskDataPath.Name = "TxtVirtualDiskDataPath";
@@ -302,7 +303,6 @@
             // 
             // BtnVirtualDisk
             // 
-            this.BtnVirtualDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.BtnVirtualDisk.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.BtnVirtualDisk.Location = new System.Drawing.Point(424, 3);
             this.BtnVirtualDisk.Name = "BtnVirtualDisk";
@@ -311,9 +311,9 @@
             this.BtnVirtualDisk.Text = "挂载虚拟磁盘";
             this.BtnVirtualDisk.UseVisualStyleBackColor = true;
             this.BtnVirtualDisk.Click += new System.EventHandler(this.BtnVirtualDisk_Click);
-            //
+            // 
             // BtnSegmentVirtualDisk
-            //
+            // 
             this.BtnSegmentVirtualDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnSegmentVirtualDisk.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.BtnSegmentVirtualDisk.Location = new System.Drawing.Point(524, 3);
@@ -327,7 +327,7 @@
             // LblVirtualDiskHandles
             // 
             this.LblVirtualDiskHandles.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.LblVirtualDiskHandles.Location = new System.Drawing.Point(537, 48);
+            this.LblVirtualDiskHandles.Location = new System.Drawing.Point(434, 47);
             this.LblVirtualDiskHandles.Name = "LblVirtualDiskHandles";
             this.LblVirtualDiskHandles.Size = new System.Drawing.Size(148, 29);
             this.LblVirtualDiskHandles.TabIndex = 28;
@@ -373,6 +373,7 @@
             this.BtnAllocateDisc.Text = "分配/追加";
             this.BtnAllocateDisc.UseVisualStyleBackColor = true;
             this.BtnAllocateDisc.Click += new System.EventHandler(this.BtnAllocateDisc_Click);
+            // 
             // BtnTempFolder
             // 
             this.BtnTempFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -529,7 +530,6 @@
             this.CBoxAllocatePolicy.Name = "CBoxAllocatePolicy";
             this.CBoxAllocatePolicy.Size = new System.Drawing.Size(119, 25);
             this.CBoxAllocatePolicy.TabIndex = 10;
-            this.CBoxAllocatePolicy.SelectedIndex = 9;
             // 
             // CBoxFirstFit
             // 
@@ -570,15 +570,15 @@
             this.CBoxGenFileList.TabIndex = 5;
             this.CBoxGenFileList.Text = "生成列表";
             this.CBoxGenFileList.UseVisualStyleBackColor = true;
-            //
+            // 
             // CBoxGenMp4Headers
-            //
+            // 
             this.CBoxGenMp4Headers.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.CBoxGenMp4Headers.AutoSize = true;
             this.CBoxGenMp4Headers.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.CBoxGenMp4Headers.Location = new System.Drawing.Point(215, 433);
             this.CBoxGenMp4Headers.Name = "CBoxGenMp4Headers";
-            this.CBoxGenMp4Headers.Size = new System.Drawing.Size(150, 21);
+            this.CBoxGenMp4Headers.Size = new System.Drawing.Size(148, 21);
             this.CBoxGenMp4Headers.TabIndex = 31;
             this.CBoxGenMp4Headers.Text = "生成MP4/MOV独立头";
             this.CBoxGenMp4Headers.UseVisualStyleBackColor = true;
@@ -650,6 +650,39 @@
             this.BtnAddComplexFile.UseVisualStyleBackColor = true;
             this.BtnAddComplexFile.Click += new System.EventHandler(this.BtnAddComplexFile_Click);
             // 
+            // BtnSaveSettings
+            // 
+            this.BtnSaveSettings.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.BtnSaveSettings.Location = new System.Drawing.Point(507, 12);
+            this.BtnSaveSettings.Name = "BtnSaveSettings";
+            this.BtnSaveSettings.Size = new System.Drawing.Size(75, 29);
+            this.BtnSaveSettings.TabIndex = 33;
+            this.BtnSaveSettings.Text = "保存配置";
+            this.BtnSaveSettings.UseVisualStyleBackColor = true;
+            this.BtnSaveSettings.Click += new System.EventHandler(this.BtnSaveSettings_Click);
+            // 
+            // BtnUndoSettings
+            // 
+            this.BtnUndoSettings.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.BtnUndoSettings.Location = new System.Drawing.Point(588, 12);
+            this.BtnUndoSettings.Name = "BtnUndoSettings";
+            this.BtnUndoSettings.Size = new System.Drawing.Size(107, 29);
+            this.BtnUndoSettings.TabIndex = 34;
+            this.BtnUndoSettings.Text = "撤回配置";
+            this.BtnUndoSettings.UseVisualStyleBackColor = true;
+            this.BtnUndoSettings.Click += new System.EventHandler(this.BtnUndoSettings_Click);
+            // 
+            // BtnRedoSettings
+            // 
+            this.BtnRedoSettings.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.BtnRedoSettings.Location = new System.Drawing.Point(588, 47);
+            this.BtnRedoSettings.Name = "BtnRedoSettings";
+            this.BtnRedoSettings.Size = new System.Drawing.Size(107, 29);
+            this.BtnRedoSettings.TabIndex = 35;
+            this.BtnRedoSettings.Text = "恢复配置";
+            this.BtnRedoSettings.UseVisualStyleBackColor = true;
+            this.BtnRedoSettings.Click += new System.EventHandler(this.BtnRedoSettings_Click);
+            // 
             // LblComplexFileTemplate
             // 
             this.LblComplexFileTemplate.AutoSize = true;
@@ -667,19 +700,8 @@
             this.CBoxTemplate.FormattingEnabled = true;
             this.CBoxTemplate.Location = new System.Drawing.Point(379, 15);
             this.CBoxTemplate.Name = "CBoxTemplate";
-            this.CBoxTemplate.Size = new System.Drawing.Size(150, 25);
+            this.CBoxTemplate.Size = new System.Drawing.Size(120, 25);
             this.CBoxTemplate.TabIndex = 19;
-            //
-            // BtnSaveSettings
-            //
-            this.BtnSaveSettings.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.BtnSaveSettings.Location = new System.Drawing.Point(535, 12);
-            this.BtnSaveSettings.Name = "BtnSaveSettings";
-            this.BtnSaveSettings.Size = new System.Drawing.Size(75, 29);
-            this.BtnSaveSettings.TabIndex = 33;
-            this.BtnSaveSettings.Text = "保存配置";
-            this.BtnSaveSettings.UseVisualStyleBackColor = true;
-            this.BtnSaveSettings.Click += new System.EventHandler(this.BtnSaveSettings_Click);
             // 
             // MainUI
             // 
@@ -690,6 +712,8 @@
             this.Controls.Add(this.LblComplexFileTemplate);
             this.Controls.Add(this.BtnAddComplexFile);
             this.Controls.Add(this.BtnSaveSettings);
+            this.Controls.Add(this.BtnUndoSettings);
+            this.Controls.Add(this.BtnRedoSettings);
             this.Controls.Add(this.CBoxAllocatePolicy);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.LblVirtualDiskHandles);
@@ -782,8 +806,9 @@
         private System.Windows.Forms.TextBox TxtParArgument;
         private System.Windows.Forms.Button BtnAddComplexFile;
         private System.Windows.Forms.Button BtnSaveSettings;
+        private System.Windows.Forms.Button BtnUndoSettings;
+        private System.Windows.Forms.Button BtnRedoSettings;
         private System.Windows.Forms.Label LblComplexFileTemplate;
         private System.Windows.Forms.ComboBox CBoxTemplate;
     }
 }
-

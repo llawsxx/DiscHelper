@@ -23,6 +23,7 @@ namespace DiscHelper
         DiscItem CurrentDiscItem = null;
         NameGenerator DiscNameGenerator = null;
         Settings AllSettings;
+        SettingsSnapshot LastSavedSettings;
         List<DiscItem> LastAllDiscItems = new List<DiscItem>();
         private VirtualDiskFileSystem _virtualDisk;
         private static readonly Regex SegmentSuffixPattern = new Regex(@"\.Segment_(\d+)(?:_of_(\d+))?$",
@@ -65,8 +66,10 @@ namespace DiscHelper
             TxtVirtualDiskDataPath.Text = string.IsNullOrWhiteSpace(settings.VirtualDiskDataPath) ? "data" : settings.VirtualDiskDataPath;
             AllSettings = settings;
             RestoreWorkspace(settings);
+            LastSavedSettings = settings.CreateSnapshot();
             UpdateVirtualDiskButton();
             updateTemplateList();
+            UpdateUndoSettingsButton();
         }
 
         private string GetDiscName()
@@ -81,6 +84,9 @@ namespace DiscHelper
 
         private bool SaveCurrentSettings(bool showMessage)
         {
+            SettingsSnapshot previousSettings = LastSavedSettings ?? AllSettings.CreateSnapshot();
+            List<SettingsHistoryEntry> previousHistory = AllSettings.ConfigHistory;
+            List<SettingsHistoryEntry> previousRedoHistory = AllSettings.ConfigRedoHistory;
             AllSettings.DiskCapacity = (long)NumDiscCapacity.Value;
             AllSettings.MinDiscRedundant = (long)NumDiscRedundant.Value;
             AllSettings.MaxDiscRedundant = (long)NumDiscMaxRedundant.Value;
@@ -97,7 +103,19 @@ namespace DiscHelper
             AllSettings.ParArgument = TxtParArgument.Text;
             AllSettings.VirtualDiskDataPath = TxtVirtualDiskDataPath.Text.Trim();
             SaveWorkspace();
+            AllSettings.AddConfigHistory(previousSettings);
+            AllSettings.ConfigRedoHistory = new List<SettingsHistoryEntry>();
             bool saved = AllSettings.SaveSettings("Settings.xml");
+            if (!saved)
+            {
+                AllSettings.ConfigHistory = previousHistory;
+                AllSettings.ConfigRedoHistory = previousRedoHistory;
+            }
+            else
+            {
+                LastSavedSettings = AllSettings.CreateSnapshot();
+            }
+            UpdateUndoSettingsButton();
             if (showMessage)
             {
                 MessageBox.Show(saved ? "配置已保存" : "配置保存失败，请检查文件权限。", saved ? "提示" : "错误",
@@ -111,6 +129,153 @@ namespace DiscHelper
             SaveCurrentSettings(true);
         }
 
+        private void BtnUndoSettings_Click(object sender, EventArgs e)
+        {
+            if (DiscWorker.IsBusy)
+            {
+                MessageBox.Show("正在输出文件，请先停止。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            if (_virtualDisk != null)
+            {
+                MessageBox.Show("请先卸载虚拟磁盘，再撤回配置。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            List<SettingsHistoryEntry> history = AllSettings.ConfigHistory;
+            if (history == null || history.Count == 0)
+            {
+                MessageBox.Show("没有可撤回的配置。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                UpdateUndoSettingsButton();
+                return;
+            }
+
+            SettingsHistoryEntry entry = history[history.Count - 1];
+            string timeText = entry.SavedAt == default(DateTime) ? "最近一次保存" : entry.SavedAt.ToString("yyyy-MM-dd HH:mm:ss");
+            if (MessageBox.Show("将撤回到 " + timeText + " 保存的配置，继续吗？", "撤回配置",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+
+            Settings currentSettings = AllSettings;
+            Settings restoredSettings = entry.Snapshot == null ? null : entry.Snapshot.ToSettings();
+            if (restoredSettings == null)
+            {
+                history.RemoveAt(history.Count - 1);
+                UpdateUndoSettingsButton();
+                return;
+            }
+
+            restoredSettings.ConfigHistory = Settings.CloneHistory(history.Take(history.Count - 1));
+            restoredSettings.ConfigRedoHistory = Settings.CloneHistory(currentSettings.ConfigRedoHistory);
+            restoredSettings.ConfigRedoHistory.Add(new SettingsHistoryEntry { SavedAt = DateTime.Now, Snapshot = currentSettings.CreateSnapshot() });
+            if (restoredSettings.ConfigRedoHistory.Count > Settings.MaxConfigHistoryCount)
+                restoredSettings.ConfigRedoHistory.RemoveRange(0, restoredSettings.ConfigRedoHistory.Count - Settings.MaxConfigHistoryCount);
+            AllSettings = restoredSettings;
+            if (!AllSettings.SaveSettings("Settings.xml"))
+            {
+                AllSettings = currentSettings;
+                MessageBox.Show("配置撤回失败，请检查文件权限。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ApplySettingsToControls(AllSettings);
+            LastSavedSettings = AllSettings.CreateSnapshot();
+            MessageBox.Show("配置已撤回。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void BtnRedoSettings_Click(object sender, EventArgs e)
+        {
+            if (DiscWorker.IsBusy)
+            {
+                MessageBox.Show("正在输出文件，请先停止。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            if (_virtualDisk != null)
+            {
+                MessageBox.Show("请先卸载虚拟磁盘，再恢复配置。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            List<SettingsHistoryEntry> redoHistory = AllSettings.ConfigRedoHistory;
+            if (redoHistory == null || redoHistory.Count == 0)
+            {
+                MessageBox.Show("没有可恢复的配置。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                UpdateUndoSettingsButton();
+                return;
+            }
+            if (MessageBox.Show("恢复最近一次撤回的配置吗？", "恢复配置", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+
+            Settings currentSettings = AllSettings;
+            SettingsHistoryEntry entry = redoHistory[redoHistory.Count - 1];
+            Settings restoredSettings = entry.Snapshot == null ? null : entry.Snapshot.ToSettings();
+            if (restoredSettings == null)
+            {
+                redoHistory.RemoveAt(redoHistory.Count - 1);
+                UpdateUndoSettingsButton();
+                return;
+            }
+
+            restoredSettings.ConfigHistory = Settings.CloneHistory(currentSettings.ConfigHistory);
+            restoredSettings.ConfigHistory.Add(new SettingsHistoryEntry { SavedAt = DateTime.Now, Snapshot = currentSettings.CreateSnapshot() });
+            if (restoredSettings.ConfigHistory.Count > Settings.MaxConfigHistoryCount)
+                restoredSettings.ConfigHistory.RemoveRange(0, restoredSettings.ConfigHistory.Count - Settings.MaxConfigHistoryCount);
+            restoredSettings.ConfigRedoHistory = Settings.CloneHistory(redoHistory.Take(redoHistory.Count - 1));
+            AllSettings = restoredSettings;
+            if (!AllSettings.SaveSettings("Settings.xml"))
+            {
+                AllSettings = currentSettings;
+                MessageBox.Show("配置恢复失败，请检查文件权限。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ApplySettingsToControls(AllSettings);
+            LastSavedSettings = AllSettings.CreateSnapshot();
+            MessageBox.Show("配置已恢复。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void UpdateUndoSettingsButton()
+        {
+            BtnUndoSettings.Enabled = AllSettings != null && AllSettings.ConfigHistory != null && AllSettings.ConfigHistory.Count > 0;
+            if (BtnUndoSettings.Enabled)
+                BtnUndoSettings.Text = "撤回配置 (" + AllSettings.ConfigHistory.Count + ")";
+            else
+                BtnUndoSettings.Text = "撤回配置";
+            BtnRedoSettings.Enabled = AllSettings != null && AllSettings.ConfigRedoHistory != null && AllSettings.ConfigRedoHistory.Count > 0;
+            if (BtnRedoSettings.Enabled)
+                BtnRedoSettings.Text = "恢复配置 (" + AllSettings.ConfigRedoHistory.Count + ")";
+            else
+                BtnRedoSettings.Text = "恢复配置";
+        }
+
+        private void ApplySettingsToControls(Settings settings)
+        {
+            NumDiscCapacity.Value = Math.Min(NumDiscCapacity.Maximum, Math.Max(NumDiscCapacity.Minimum, settings.DiskCapacity));
+            NumDiscRedundant.Value = Math.Min(NumDiscRedundant.Maximum, Math.Max(NumDiscRedundant.Minimum, settings.MinDiscRedundant));
+            NumDiscMaxRedundant.Value = Math.Min(NumDiscMaxRedundant.Maximum, Math.Max(NumDiscMaxRedundant.Minimum, settings.MaxDiscRedundant));
+            TxtDiscNamePattern.Text = settings.DiscNamePattern ?? "";
+            CBoxAllocatePolicy.SelectedIndex = settings.AllocatePolicy >= 0 && settings.AllocatePolicy < CBoxAllocatePolicy.Items.Count ? settings.AllocatePolicy : -1;
+            TxtOutputPath.Text = settings.OutputFolder ?? "";
+            CBoxMoveFile.Checked = settings.isMove;
+            CBoxGenPar.Checked = settings.GeneratePar;
+            CBoxFirstFit.Checked = settings.isFirstFit;
+            CboxCutFile.Checked = settings.isCutFile;
+            CBoxGenFileList.Checked = settings.GenerateFileList;
+            CBoxGenMp4Headers.Checked = settings.GenerateMp4PlaybackHeaders;
+            NumBuffer.Value = Math.Min(NumBuffer.Maximum, Math.Max(NumBuffer.Minimum, settings.ReadBuffer));
+            TxtParArgument.Text = settings.ParArgument ?? "";
+            TxtVirtualDiskDataPath.Text = string.IsNullOrWhiteSpace(settings.VirtualDiskDataPath) ? "data" : settings.VirtualDiskDataPath;
+            CurrentDiscItem = null;
+            LstFiles.Items.Clear();
+            LstDiscs.Items.Clear();
+            LstDiscFiles.Items.Clear();
+            DiscNameGenerator = null;
+            RestoreWorkspace(settings);
+            updateTemplateList();
+            UpdateFileMoveButtons();
+            UpdateUndoSettingsButton();
+        }
+
         private void DiskHelper_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (DiscWorker.IsBusy)
@@ -120,7 +285,7 @@ namespace DiscHelper
                 return;
             }
 
-            DialogResult saveResult = MessageBox.Show("是否保存配置？", "关闭软件", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            DialogResult saveResult = MessageBox.Show("保存配置、文件列表、光盘列表信息吗？", "关闭软件", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
             if (saveResult == DialogResult.Cancel)
             {
                 e.Cancel = true;

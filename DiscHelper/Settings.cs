@@ -31,6 +31,119 @@ namespace DiscHelper
         public List<PersistedDiscItem> SavedDiscs = new List<PersistedDiscItem>();
         public int SavedSelectedDiscIndex = -1;
         public List<ComplexFileTemplate> ComplexFileTemplates = new List<ComplexFileTemplate>();
+        // Previous successfully saved configurations, newest entry last.
+        public List<SettingsHistoryEntry> ConfigHistory = new List<SettingsHistoryEntry>();
+        // Configurations that can be restored after an undo, newest entry last.
+        public List<SettingsHistoryEntry> ConfigRedoHistory = new List<SettingsHistoryEntry>();
+
+        public const int MaxConfigHistoryCount = 30;
+
+        /// <summary>
+        /// Creates a deep copy of the current configuration without its history.
+        /// History entries use this form to avoid recursively copying the history list.
+        /// </summary>
+        public SettingsSnapshot CreateSnapshot()
+        {
+            SettingsSnapshot snapshot = new SettingsSnapshot
+            {
+                DiskCapacity = DiskCapacity,
+                MinDiscRedundant = MinDiscRedundant,
+                MaxDiscRedundant = MaxDiscRedundant,
+                DiscNamePattern = DiscNamePattern,
+                AllocatePolicy = AllocatePolicy,
+                OutputFolder = OutputFolder,
+                ParExePath = ParExePath,
+                isMove = isMove,
+                GeneratePar = GeneratePar,
+                isFirstFit = isFirstFit,
+                isCutFile = isCutFile,
+                GenerateFileList = GenerateFileList,
+                GenerateMp4PlaybackHeaders = GenerateMp4PlaybackHeaders,
+                ReadBuffer = ReadBuffer,
+                ParArgument = ParArgument,
+                VirtualDiskDataPath = VirtualDiskDataPath,
+                SavedSelectedDiscIndex = SavedSelectedDiscIndex
+            };
+
+            snapshot.SavedFiles = (SavedFiles ?? new List<PersistedFileItem>()).Select(CloneFileItem).ToList();
+            snapshot.SavedDiscs = (SavedDiscs ?? new List<PersistedDiscItem>()).Select(CloneDiscItem).ToList();
+            snapshot.ComplexFileTemplates = (ComplexFileTemplates ?? new List<ComplexFileTemplate>())
+                .Select(CloneTemplate).ToList();
+            return snapshot;
+        }
+
+        public static List<SettingsHistoryEntry> CloneHistory(IEnumerable<SettingsHistoryEntry> history)
+        {
+            return (history ?? Enumerable.Empty<SettingsHistoryEntry>())
+                .Where(item => item != null && item.Snapshot != null)
+                .Select(item => new SettingsHistoryEntry
+                {
+                    SavedAt = item.SavedAt,
+                    Snapshot = item.Snapshot.CreateSnapshot()
+                }).ToList();
+        }
+
+        public void AddConfigHistory(SettingsSnapshot snapshot)
+        {
+            if (snapshot == null) return;
+            List<SettingsHistoryEntry> updatedHistory = (ConfigHistory ?? new List<SettingsHistoryEntry>()).ToList();
+            updatedHistory.Add(new SettingsHistoryEntry
+            {
+                SavedAt = DateTime.Now,
+                Snapshot = snapshot.CreateSnapshot()
+            });
+            if (updatedHistory.Count > MaxConfigHistoryCount)
+                updatedHistory.RemoveRange(0, updatedHistory.Count - MaxConfigHistoryCount);
+            ConfigHistory = updatedHistory;
+        }
+
+        internal static PersistedFileItem CloneFileItem(PersistedFileItem item)
+        {
+            if (item == null) return null;
+            return new PersistedFileItem
+            {
+                Name = item.Name,
+                DestName = item.DestName,
+                Size = item.Size,
+                CreateTime = item.CreateTime,
+                StartPos = item.StartPos,
+                NoCut = item.NoCut,
+                Priority = item.Priority,
+                Command = item.Command,
+                CommandExe = item.CommandExe,
+                IsFirstCommand = item.IsFirstCommand,
+                FileId = item.FileId
+            };
+        }
+
+        internal static PersistedDiscItem CloneDiscItem(PersistedDiscItem item)
+        {
+            if (item == null) return null;
+            return new PersistedDiscItem
+            {
+                Name = item.Name,
+                OriginalName = item.OriginalName,
+                Capacity = item.Capacity,
+                IsAvailable = item.IsAvailable,
+                IsGenPar = item.IsGenPar,
+                FileItems = (item.FileItems ?? new List<PersistedFileItem>()).Select(CloneFileItem).ToList()
+            };
+        }
+
+        internal static ComplexFileTemplate CloneTemplate(ComplexFileTemplate template)
+        {
+            if (template == null) return null;
+            return new ComplexFileTemplate
+            {
+                Name = template.Name,
+                FileInputReplaceStr = template.FileInputReplaceStr,
+                FileInputListSep = template.FileInputListSep,
+                InputOutputSizeRatio = template.InputOutputSizeRatio,
+                CommandLine = template.CommandLine,
+                CommandLineExe = template.CommandLineExe,
+                OutputFileSuffix = template.OutputFileSuffix
+            };
+        }
         public static Settings LoadSettings(string filename)
         {
             try
@@ -38,7 +151,17 @@ namespace DiscHelper
                 using (FileStream fs = new FileStream(filename, FileMode.Open))
                 {
                     XmlSerializer serializer = new XmlSerializer(typeof(Settings));
-                    return (Settings)serializer.Deserialize(fs);
+                    Settings settings = (Settings)serializer.Deserialize(fs);
+                    if (settings == null) return new Settings();
+                    if (settings.ConfigHistory == null) settings.ConfigHistory = new List<SettingsHistoryEntry>();
+                    if (settings.ConfigRedoHistory == null) settings.ConfigRedoHistory = new List<SettingsHistoryEntry>();
+                    settings.ConfigHistory.RemoveAll(item => item == null || item.Snapshot == null);
+                    settings.ConfigRedoHistory.RemoveAll(item => item == null || item.Snapshot == null);
+                    if (settings.ConfigHistory.Count > MaxConfigHistoryCount)
+                        settings.ConfigHistory.RemoveRange(0, settings.ConfigHistory.Count - MaxConfigHistoryCount);
+                    if (settings.ConfigRedoHistory.Count > MaxConfigHistoryCount)
+                        settings.ConfigRedoHistory.RemoveRange(0, settings.ConfigRedoHistory.Count - MaxConfigHistoryCount);
+                    return settings;
                 }
             }
             catch (Exception ex)
@@ -66,6 +189,76 @@ namespace DiscHelper
             return false;
         }
 
+    }
+
+    public class SettingsHistoryEntry
+    {
+        public DateTime SavedAt;
+        public SettingsSnapshot Snapshot;
+    }
+
+    /// <summary>
+    /// Serializable configuration snapshot. It intentionally excludes undo/redo history.
+    /// </summary>
+    public class SettingsSnapshot
+    {
+        public long DiskCapacity;
+        public long MinDiscRedundant;
+        public long MaxDiscRedundant;
+        public string DiscNamePattern;
+        public int AllocatePolicy;
+        public string OutputFolder;
+        public string ParExePath;
+        public bool isMove;
+        public bool GeneratePar;
+        public bool isFirstFit;
+        public bool isCutFile;
+        public bool GenerateFileList;
+        public bool GenerateMp4PlaybackHeaders;
+        public long ReadBuffer;
+        public string ParArgument;
+        public string VirtualDiskDataPath;
+        public List<PersistedFileItem> SavedFiles = new List<PersistedFileItem>();
+        public List<PersistedDiscItem> SavedDiscs = new List<PersistedDiscItem>();
+        public int SavedSelectedDiscIndex = -1;
+        public List<ComplexFileTemplate> ComplexFileTemplates = new List<ComplexFileTemplate>();
+
+        public SettingsSnapshot CreateSnapshot()
+        {
+            SettingsSnapshot snapshot = (SettingsSnapshot)MemberwiseClone();
+            snapshot.SavedFiles = (SavedFiles ?? new List<PersistedFileItem>()).Select(Settings.CloneFileItem).ToList();
+            snapshot.SavedDiscs = (SavedDiscs ?? new List<PersistedDiscItem>()).Select(Settings.CloneDiscItem).ToList();
+            snapshot.ComplexFileTemplates = (ComplexFileTemplates ?? new List<ComplexFileTemplate>()).Select(Settings.CloneTemplate).ToList();
+            return snapshot;
+        }
+
+        public Settings ToSettings()
+        {
+            Settings settings = new Settings
+            {
+                DiskCapacity = DiskCapacity,
+                MinDiscRedundant = MinDiscRedundant,
+                MaxDiscRedundant = MaxDiscRedundant,
+                DiscNamePattern = DiscNamePattern,
+                AllocatePolicy = AllocatePolicy,
+                OutputFolder = OutputFolder,
+                ParExePath = ParExePath,
+                isMove = isMove,
+                GeneratePar = GeneratePar,
+                isFirstFit = isFirstFit,
+                isCutFile = isCutFile,
+                GenerateFileList = GenerateFileList,
+                GenerateMp4PlaybackHeaders = GenerateMp4PlaybackHeaders,
+                ReadBuffer = ReadBuffer,
+                ParArgument = ParArgument,
+                VirtualDiskDataPath = VirtualDiskDataPath,
+                SavedSelectedDiscIndex = SavedSelectedDiscIndex,
+                SavedFiles = (SavedFiles ?? new List<PersistedFileItem>()).Select(Settings.CloneFileItem).ToList(),
+                SavedDiscs = (SavedDiscs ?? new List<PersistedDiscItem>()).Select(Settings.CloneDiscItem).ToList(),
+                ComplexFileTemplates = (ComplexFileTemplates ?? new List<ComplexFileTemplate>()).Select(Settings.CloneTemplate).ToList()
+            };
+            return settings;
+        }
     }
 
     public class PersistedFileItem
