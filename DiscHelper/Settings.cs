@@ -232,6 +232,96 @@ namespace DiscHelper
             return snapshot;
         }
 
+        public bool ContentEquals(SettingsSnapshot other)
+        {
+            if (other == null) return false;
+            return DiskCapacity == other.DiskCapacity &&
+                MinDiscRedundant == other.MinDiscRedundant &&
+                MaxDiscRedundant == other.MaxDiscRedundant &&
+                string.Equals(DiscNamePattern, other.DiscNamePattern, StringComparison.Ordinal) &&
+                AllocatePolicy == other.AllocatePolicy &&
+                string.Equals(OutputFolder, other.OutputFolder, StringComparison.Ordinal) &&
+                string.Equals(ParExePath, other.ParExePath, StringComparison.Ordinal) &&
+                isMove == other.isMove && GeneratePar == other.GeneratePar && isFirstFit == other.isFirstFit &&
+                isCutFile == other.isCutFile && GenerateFileList == other.GenerateFileList &&
+                GenerateMp4PlaybackHeaders == other.GenerateMp4PlaybackHeaders && ReadBuffer == other.ReadBuffer &&
+                string.Equals(ParArgument, other.ParArgument, StringComparison.Ordinal) &&
+                string.Equals(VirtualDiskDataPath, other.VirtualDiskDataPath, StringComparison.Ordinal) &&
+                SavedSelectedDiscIndex == other.SavedSelectedDiscIndex &&
+                FileItemsEqual(SavedFiles, other.SavedFiles) &&
+                DiscItemsEqual(SavedDiscs, other.SavedDiscs) &&
+                TemplateItemsEqual(ComplexFileTemplates, other.ComplexFileTemplates);
+        }
+
+        private static bool FileItemsEqual(IList<PersistedFileItem> left, IList<PersistedFileItem> right)
+        {
+            if (ReferenceEquals(left, right)) return true;
+            if (left == null || right == null || left.Count != right.Count) return false;
+            for (int i = 0; i < left.Count; i++)
+            {
+                PersistedFileItem a = left[i], b = right[i];
+                if (a == null || b == null)
+                {
+                    if (!ReferenceEquals(a, b)) return false;
+                    continue;
+                }
+                if (!string.Equals(a.Name, b.Name, StringComparison.Ordinal) ||
+                    !string.Equals(a.DestName, b.DestName, StringComparison.Ordinal) ||
+                    a.Size != b.Size || a.CreateTime != b.CreateTime || a.StartPos != b.StartPos ||
+                    a.NoCut != b.NoCut || a.Priority != b.Priority ||
+                    !string.Equals(a.Command, b.Command, StringComparison.Ordinal) ||
+                    !string.Equals(a.CommandExe, b.CommandExe, StringComparison.Ordinal) ||
+                    a.IsFirstCommand != b.IsFirstCommand || a.FileId != b.FileId)
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool DiscItemsEqual(IList<PersistedDiscItem> left, IList<PersistedDiscItem> right)
+        {
+            if (ReferenceEquals(left, right)) return true;
+            if (left == null || right == null || left.Count != right.Count) return false;
+            for (int i = 0; i < left.Count; i++)
+            {
+                PersistedDiscItem a = left[i], b = right[i];
+                if (a == null || b == null)
+                {
+                    if (!ReferenceEquals(a, b)) return false;
+                    continue;
+                }
+                if (!string.Equals(a.Name, b.Name, StringComparison.Ordinal) ||
+                    !string.Equals(a.OriginalName, b.OriginalName, StringComparison.Ordinal) ||
+                    a.Capacity != b.Capacity || a.IsAvailable != b.IsAvailable || a.IsGenPar != b.IsGenPar ||
+                    !FileItemsEqual(a.FileItems, b.FileItems))
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool TemplateItemsEqual(IList<ComplexFileTemplate> left, IList<ComplexFileTemplate> right)
+        {
+            if (ReferenceEquals(left, right)) return true;
+            if (left == null || right == null || left.Count != right.Count) return false;
+            for (int i = 0; i < left.Count; i++)
+            {
+                ComplexFileTemplate a = left[i], b = right[i];
+                if (a == null || b == null)
+                {
+                    if (!ReferenceEquals(a, b)) return false;
+                    continue;
+                }
+                if (!string.Equals(a.Name, b.Name, StringComparison.Ordinal) ||
+                    !string.Equals(a.FileInputReplaceStr, b.FileInputReplaceStr, StringComparison.Ordinal) ||
+                    !string.Equals(a.FileInputListSep, b.FileInputListSep, StringComparison.Ordinal) ||
+                    a.InputOutputSizeRatio != b.InputOutputSizeRatio ||
+                    !string.Equals(a.CommandLine, b.CommandLine, StringComparison.Ordinal) ||
+                    !string.Equals(a.CommandLineExe, b.CommandLineExe, StringComparison.Ordinal) ||
+                    !string.Equals(a.OutputFileSuffix, b.OutputFileSuffix, StringComparison.Ordinal))
+                    return false;
+            }
+            return true;
+        }
+
         public Settings ToSettings()
         {
             Settings settings = new Settings

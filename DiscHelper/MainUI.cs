@@ -103,6 +103,13 @@ namespace DiscHelper
             AllSettings.ParArgument = TxtParArgument.Text;
             AllSettings.VirtualDiskDataPath = TxtVirtualDiskDataPath.Text.Trim();
             SaveWorkspace();
+            SettingsSnapshot currentSettings = AllSettings.CreateSnapshot();
+            if (previousSettings != null && previousSettings.ContentEquals(currentSettings))
+            {
+                if (showMessage)
+                    MessageBox.Show("配置未变化，无需保存。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return true;
+            }
             AllSettings.AddConfigHistory(previousSettings);
             AllSettings.ConfigRedoHistory = new List<SettingsHistoryEntry>();
             bool saved = AllSettings.SaveSettings("Settings.xml");
